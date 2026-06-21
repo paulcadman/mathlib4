@@ -12,7 +12,7 @@ public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 public import Mathlib.Tactic.Determinant.Bird.Cert
 
 /-!
-# `norm_det` simproc and `eval_det` tactic
+# `norm_det` tactic
 
 A tactic for normalizing matrix determinants.
 -/
@@ -76,7 +76,11 @@ simproc_decl norm_matrix_det (Matrix.det _) := fun e => do
   | some result => return .done result
   | none => return .continue
 
-/-- Normalize `birdDet` calls in the target using the certificate-chain simproc. -/
-macro (name := evalDet) "eval_det" : tactic => `(tactic| simp only [norm_det])
+/-- Normalize `birdDet` and determinants of array-backed matrices in the target. -/
+macro (name := normDet) "norm_det" : tactic =>
+  `(tactic| simp only [norm_det, norm_matrix_det])
+
+/-- Compatibility alias for `norm_det`. -/
+macro (name := evalDet) "eval_det" : tactic => `(tactic| norm_det)
 
 end

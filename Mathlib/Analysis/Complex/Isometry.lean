@@ -142,8 +142,7 @@ theorem toMatrix_rotation (a : Circle) :
   ext i j
   simp only [LinearMap.toMatrix_apply, coe_basisOneI, LinearEquiv.coe_coe,
     LinearIsometryEquiv.coe_toLinearEquiv, rotation_apply, coe_basisOneI_repr, mul_re, mul_im,
-    Matrix.val_planeConformalMatrix, Matrix.of_apply, Matrix.cons_val', Matrix.empty_val',
-    Matrix.cons_val_fin_one]
+    Matrix.val_planeConformalMatrix]
   fin_cases i <;> fin_cases j <;> simp
 
 /-- The determinant of `rotation` (as a linear map) is equal to `1`. -/

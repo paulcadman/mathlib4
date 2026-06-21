@@ -194,13 +194,24 @@ variable {R : Type*} [Ring R]
 /-- The map sending `x` to `[1, x; 0, 1]` (bundled as an `AddChar`). -/
 @[simps apply]
 def upperRightHom : AddChar R (GL (Fin 2) R) where
-  toFun x := ⟨!![1, x; 0, 1], !![1, -x; 0, 1], by simp [one_fin_two], by simp [one_fin_two]⟩
-  map_zero_eq_one' := by simp [Units.ext_iff, one_fin_two]
-  map_add_eq_mul' a b := by simp [Units.ext_iff, add_comm]
+  toFun x := ⟨!![1, x; 0, 1], !![1, -x; 0, 1], by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_succ], by
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_succ]⟩
+  map_zero_eq_one' := by
+    apply Units.ext
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp
+  map_add_eq_mul' a b := by
+    apply Units.ext
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_succ, add_comm]
 
 lemma injective_upperRightHom : Function.Injective (upperRightHom (R := R)) := by
   refine (injective_iff_map_eq_zero (upperRightHom (R := R)).toAddMonoidHom).mpr ?_
-  simp [Units.ext_iff, one_fin_two]
+  simp [Units.ext_iff, ← Matrix.ext_iff, Fin.forall_fin_succ, Matrix.ofArray_apply,
+    Fin.getElem_fin, Fin.coe_mkDivMod]
 
 end Ring
 
@@ -295,10 +306,12 @@ lemma isParabolic_iff_of_upperTriangular_of_det [LinearOrder K] [IsStrictOrdered
     apply (sq_eq_one_iff.mp this).imp <;> intro hg11 <;> simp only [Units.ext_iff]
     · refine ⟨g 0 1, hg01, ?_⟩
       rw [g.val.eta_fin_two]
-      simp_all
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp_all
     · refine ⟨-g 0 1, neg_eq_zero.not.mpr hg01, ?_⟩
       rw [g.val.eta_fin_two]
-      simp_all
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp_all
   · rintro (⟨x, hx, rfl⟩ | ⟨x, hx, rfl⟩) <;>
     simpa using hx
 
