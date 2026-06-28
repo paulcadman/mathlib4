@@ -5,7 +5,10 @@ Authors: Paul Cadman
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.Ring.Defs
+public import Mathlib.Data.Fintype.Basic
+public import Mathlib.LinearAlgebra.Matrix.Defs
 
 /-!
 
@@ -26,6 +29,7 @@ URL:    https://doi.org/10.1016/j.ipl.2011.08.006
 - `BirdDet.get`: matrix entry lookup.
 - `BirdDet.sumFrom`: The sum `f lo + ... + f (n - 1)`.
 - `BirdDet.iter`: The internal scalar recurrence for Bird's algorithm.
+- `BirdDet.Spec.birdDet`: An implementation of Bird's algorithm using `Matrix`.
 
 ## Main lemmas
 
@@ -125,6 +129,32 @@ theorem birdDet_eq (n k : ℕ) (A : Array R) (hn : n = k + 1) :
     birdDet n A = (-1 : R) ^ k * BirdDet.iter n A k (BirdDet.get n A) 0 0 := by
   subst hn
   rfl
+
+namespace Spec
+
+open scoped BigOperators
+
+def stepEntry {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) R)
+    (F : Fin n → Fin n → R)
+    (i j : Fin n) : R :=
+  let diag : R := -∑ k : Fin n, if i < k then F k k else 0
+  diag * A i j + ∑ k : Fin n, if i < k then F i k * A k j else 0
+
+def iterEntry {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) R) :
+    ℕ → (Fin n → Fin n → R) → Fin n → Fin n → R
+  | 0, F => F
+  | p + 1, F => fun i j => stepEntry A (iterEntry A p F) i j
+
+/-- A version of the Bird determinant algorithm that is stated in terms of `Matrix`. -/
+def birdDet {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) R) : R :=
+  match n with
+  | 0 => 1
+  | k + 1 => (-1 : R)^k * iterEntry A k (fun i j => A i j) 0 0
+
+end Spec
 
 end BirdDet
 
