@@ -12,13 +12,15 @@ public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
 import Mathlib.Algebra.Order.BigOperators.Group.LocallyFinite
 
 /-!
-This file contains the theorem that Bird's algorithm computes Matrix.det
+This file connects the flat-array implementation of Bird's determinant
+algorithm with `Matrix.det`.
 
 ## Main theorems
 
-- `birdDetSpec_eq_det` - Proves that BirdDet.Spec.birdDet computes Matrix.det
-- `det_eq_birdDet` - Proves that BirdDet.Spec.birdDet computes BirdDet.birdDet
-- `det_eq_birdDet` - Proves that BirdDet.birdDet computes Matrix.det
+- `birdDetSpec_eq_det` - Proves that `BirdDet.Spec.birdDet` computes `Matrix.det`.
+- `birdDet_eq_birdDetSpec` - Proves that `BirdDet.birdDet` agrees with
+  `BirdDet.Spec.birdDet`.
+- `det_eq_birdDet` - Proves that `BirdDet.birdDet` computes `Matrix.det`.
 
 -/
 
@@ -42,7 +44,15 @@ theorem rowMajorIndex_lt
     _ ≤ rows * cols :=
       Nat.mul_le_mul_right cols (Nat.succ_le_of_lt i.isLt)
 
-theorem get_eq_idx
+theorem sumFrom_eq_sum_Ico (n lo : ℕ) (f : ℕ → R) :
+    BirdDet.sumFrom n lo f = ∑ k ∈ Finset.Ico lo n, f k := by
+  rw [BirdDet.sumFrom]
+  split_ifs with h
+  · rw [sumFrom_eq_sum_Ico n (lo + 1) f]
+    simp [Finset.sum_eq_sum_Ico_succ_bot h f]
+  · simp [Finset.Ico_eq_empty h]
+
+theorem get_eq_ofArray_apply
     {rows cols : ℕ}
     (A : Array R)
     (hA : A.size = rows * cols)
@@ -53,14 +63,6 @@ theorem get_eq_idx
     exact rowMajorIndex_lt i j
   simp [BirdDet.get, Matrix.ofArray, Array.getD, hidx]
 
-theorem sumFrom_eq_sum_Ico (n lo : ℕ) (f : ℕ → R) :
-    BirdDet.sumFrom n lo f = ∑ k ∈ Finset.Ico lo n, f k := by
-  rw [BirdDet.sumFrom]
-  split_ifs with h
-  · rw [sumFrom_eq_sum_Ico n (lo + 1) f]
-    simp [Finset.sum_eq_sum_Ico_succ_bot h f]
-  · simp [Finset.Ico_eq_empty h]
-
 theorem sumFrom_fin_tail (n : ℕ) (i : Fin n) (f : ℕ → R) :
     BirdDet.sumFrom n (i.val + 1) f =
       ∑ k : Fin n, if i < k then f k.val else 0 := by
@@ -68,66 +70,55 @@ theorem sumFrom_fin_tail (n : ℕ) (i : Fin n) (f : ℕ → R) :
   trans ∑ k : Fin n, if i.val < k.val then f k.val else 0
   · rw [Fin.sum_univ_eq_sum_range (fun x => if i.val < x then f x else 0) n]
     rw [← Finset.sum_filter]
-    rw [show (Finset.range n).filter (fun x => i.val < x) = Finset.Ico (i.val + 1) n by
+    have hfilter :
+        (Finset.range n).filter (fun x => i.val < x) = Finset.Ico (i.val + 1) n := by
       ext x
-      simp [Finset.mem_Ico, and_comm]]
+      simp [Finset.mem_Ico, and_comm]
+    rw [hfilter]
   · rfl
 
-theorem iter_step
+theorem step_bridge_iterMatrix
     {n : ℕ}
     (A : Array R)
     (hA : A.size = n * n)
-    (F : ℕ → ℕ → R)
-    (i j : Fin n) :
-    (-(BirdDet.sumFrom n (i.val + 1) fun k => F k k) *
-        BirdDet.get n A i.val j.val
-      +
-      BirdDet.sumFrom n (i.val + 1) fun k =>
-        F i.val k * BirdDet.get n A k j.val)
-      =
-    Spec.stepEntry
-      (Matrix.ofArray (m := n) (n := n) A hA)
-      (fun i j => F i.val j.val)
-      i j := by
-  rw [sumFrom_fin_tail]
-  rw [sumFrom_fin_tail]
-  rw [Spec.stepEntry_eq]
-  simp [get_eq_idx A hA]
-
-lemma iter_eq_spec_iterEntry_ofNat
-    (n : ℕ)
-    (A : Array R)
-    (hA : A.size = n * n)
     (t : ℕ)
-    (F : ℕ → ℕ → R)
-    (i j : Fin n) :
-    BirdDet.iter n A t F i.val j.val
-      = Spec.iterEntry (Matrix.ofArray (m := n) (n := n) A hA) t
-        (fun i j => F i.val j.val) i j := by
-  induction t generalizing F i j with
-  | zero => rw [BirdDet.iter_zero, Spec.iterEntry_zero]
-  | succ t ih =>
-    rw [BirdDet.iter_succ, Spec.iterEntry_succ, iter_step]
-    · congr
-      funext p q
-      exact ih F p q
-    · exact hA
+    (i j : Fin n)
+    (ih : ∀ p q : Fin n,
+      BirdDet.iter n A t (BirdDet.get n A) p.val q.val =
+        Spec.iterMatrix
+          (Matrix.ofArray (m := n) (n := n) A hA)
+          t
+          p q) :
+    BirdDet.iter n A (t + 1) (BirdDet.get n A) i.val j.val =
+      Spec.stepEntry
+        (Matrix.ofArray (m := n) (n := n) A hA)
+        (Spec.iterMatrix
+          (Matrix.ofArray (m := n) (n := n) A hA)
+          t)
+        i j := by
+  rw [BirdDet.iter_succ, stepEntry_eq, Spec.stepEntry_eq]
+  rw [sumFrom_fin_tail]
+  rw [sumFrom_fin_tail]
+  simp [ih, get_eq_ofArray_apply A hA]
 
-lemma iter_eq_spec_iterEntry
-    (n : ℕ)
+theorem iter_get_eq_spec_iterMatrix
+    {n : ℕ}
     (A : Array R)
     (hA : A.size = n * n)
     (t : ℕ)
     (i j : Fin n) :
     BirdDet.iter n A t (BirdDet.get n A) i.val j.val =
-      Spec.iterEntry (Matrix.ofArray (m := n) (n := n) A hA) t
-        (fun i j => Matrix.ofArray (m := n) (n := n) A hA i j) i j := by
-  trans Spec.iterEntry (Matrix.ofArray (m := n) (n := n) A hA) t
-      (fun i j => BirdDet.get n A i.val j.val) i j
-  · exact iter_eq_spec_iterEntry_ofNat n A hA t (BirdDet.get n A) i j
-  · congr
-    funext p q
-    exact get_eq_idx A hA p q
+      Spec.iterMatrix
+        (Matrix.ofArray (m := n) (n := n) A hA)
+        t
+        i j := by
+  induction t generalizing i j with
+  | zero =>
+    rw [BirdDet.iter_zero, Spec.iterMatrix_zero]
+    exact get_eq_ofArray_apply A hA i j
+  | succ t ih =>
+    rw [Spec.iterMatrix_succ]
+    exact step_bridge_iterMatrix A hA t i j ih
 
 public section
 
@@ -140,14 +131,14 @@ theorem birdDet_eq_birdDetSpec {n : ℕ} (A : Array R) (hA : A.size = n * n) :
   cases n with
   | zero => rw [birdDet_zero, Spec.birdDetSpec_zero]
   | succ k =>
-    rw [birdDet_eq (k + 1) k A rfl, Spec.birdDetSpec_succ]
+    rw [birdDet_succ, Spec.birdDetSpec_succ_iterMatrix]
     apply congrArg ((-1 : R) ^ k * ·)
-    exact iter_eq_spec_iterEntry (k + 1) A hA k 0 0
+    exact iter_get_eq_spec_iterMatrix A hA k 0 0
 
 theorem det_eq_birdDet {n : ℕ} (A : Array R) (hA : A.size = n * n) :
     Matrix.det (Matrix.ofArray (m := n) (n := n) A hA) = birdDet n A := by
-  rw [birdDet_eq_birdDetSpec A hA]
-  exact (birdDetSpec_eq_det (Matrix.ofArray (m := n) (n := n) A hA))
+  rw [birdDet_eq_birdDetSpec]
+  exact birdDetSpec_eq_det _
 
 end
 

@@ -192,10 +192,16 @@ example (ι : Type*) [Inhabited ι] : Matrix.replicateCol ι (fun (_ : Fin 3) =>
 section BirdDet
 
 open BirdDet
+open scoped BigOperators
 
 variable
   {R : Type*}
   [CommRing R]
+
+example (A : Array R) (hA : A.size = 3 * 3) :
+    birdDet 3 A =
+      Spec.birdDet (Matrix.ofArray (m := 3) (n := 3) A hA) := by
+  exact birdDet_eq_birdDetSpec A hA
 
 example : birdDet 0 #[] = (1 : ℤ) := by
   eval_det
