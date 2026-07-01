@@ -9,6 +9,7 @@ public import Mathlib.Data.Fin.Basic
 public import Mathlib.LinearAlgebra.Matrix.Defs
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 import Mathlib.Algebra.Order.BigOperators.Group.LocallyFinite
 
 /-!
@@ -17,7 +18,6 @@ algorithm with `Matrix.det`.
 
 ## Main theorems
 
-- `birdDetSpec_eq_det` - Proves that `BirdDet.Spec.birdDet` computes `Matrix.det`.
 - `birdDet_eq_birdDetSpec` - Proves that `BirdDet.birdDet` agrees with
   `BirdDet.Spec.birdDet`.
 - `det_eq_birdDet` - Proves that `BirdDet.birdDet` computes `Matrix.det`.
@@ -96,9 +96,7 @@ theorem step_bridge_iterMatrix
           (Matrix.ofArray (m := n) (n := n) A hA)
           t)
         i j := by
-  rw [BirdDet.iter_succ, stepEntry_eq, Spec.stepEntry_eq]
-  rw [sumFrom_fin_tail]
-  rw [sumFrom_fin_tail]
+  rw [BirdDet.iter_succ, stepEntry_eq, Spec.stepEntry_eq, sumFrom_fin_tail, sumFrom_fin_tail]
   simp [ih, get_eq_ofArray_apply A hA]
 
 theorem iter_get_eq_spec_iterMatrix
@@ -121,10 +119,6 @@ theorem iter_get_eq_spec_iterMatrix
     exact step_bridge_iterMatrix A hA t i j ih
 
 public section
-
-theorem birdDetSpec_eq_det {n : ℕ} (A : Matrix (Fin n) (Fin n) R) :
-    Matrix.det A = Spec.birdDet A := by
-  sorry
 
 theorem birdDet_eq_birdDetSpec {n : ℕ} (A : Array R) (hA : A.size = n * n) :
     birdDet n A = Spec.birdDet (Matrix.ofArray (m := n) (n := n) A hA) := by

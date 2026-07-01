@@ -181,56 +181,48 @@ namespace Spec
 open scoped BigOperators
 
 /-- The diagonal tail sum used in the Matrix/Fin specification. -/
-def diagSum {n : ℕ} (F : Fin n → Fin n → R) (i : Fin n) : R :=
+@[expose] def diagSum {n : ℕ} (F : Matrix (Fin n) (Fin n) R) (i : Fin n) : R :=
   ∑ k : Fin n, if i < k then F k k else 0
 
 /-- The diagonal contribution to one Matrix/Fin Bird recurrence step. -/
-def diagTerm {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R)
-    (i j : Fin n) : R :=
-  -(diagSum F i) * A i j
+@[expose] def diagTerm {n : ℕ}
+    (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
+  .of fun i j => -(diagSum F i) * A i j
 
 /-- The upper-tail contribution to one Matrix/Fin Bird recurrence step. -/
-def tailSum {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R)
-    (i j : Fin n) : R :=
-  ∑ k : Fin n, if i < k then F i k * A k j else 0
+@[expose] def tailSum {n : ℕ}
+    (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
+  .of fun i j => ∑ k : Fin n, if i < k then F i k * A k j else 0
 
 /-- One entry of one Matrix/Fin Bird recurrence step. -/
-def stepEntry {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R)
-    (i j : Fin n) : R :=
-  diagTerm A F i j + tailSum A F i j
+@[expose] def stepEntry {n : ℕ}
+    (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
+  diagTerm A F + tailSum A F
 
 @[expose] def iterEntry {n : ℕ}
     (A : Matrix (Fin n) (Fin n) R) :
-    ℕ → (Fin n → Fin n → R) → Fin n → Fin n → R
+    ℕ → Matrix (Fin n) (Fin n) R → Matrix (Fin n) (Fin n) R
   | 0, F => F
   | p + 1, F => fun i j => stepEntry A (iterEntry A p F) i j
 
 /--
-`iterMatrix A p i j` is Bird's `x^(p)_{ij}`: the `(i, j) entry after starting
+`iterMatrix A p i j` is Bird's `x^(p)_{ij}`: the `(i, j)` entry after starting
 the Bird recurrence from the matrix `A` itself.
 -/
 @[expose] def iterMatrix {n : ℕ}
     (A : Matrix (Fin n) (Fin n) R)
-    (p : ℕ)
-    (i j : Fin n) : R :=
-  iterEntry A p (fun i j => A i j) i j
+    (p : ℕ) : Matrix (Fin n) (Fin n) R :=
+  iterEntry A p A
 
 /-- A version of the Bird determinant algorithm that is stated in terms of `Matrix`. -/
-def birdDet {n : ℕ}
+@[expose] def birdDet {n : ℕ}
     (A : Matrix (Fin n) (Fin n) R) : R :=
   match n with
   | 0 => 1
-  | k + 1 => (-1 : R) ^ k * iterEntry A k (fun i j => A i j) 0 0
+  | k + 1 => (-1 : R) ^ k * iterEntry A k A 0 0
 
 theorem stepEntry_eq {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R)
+    (A F : Matrix (Fin n) (Fin n) R)
     (i j : Fin n) :
     stepEntry A F i j =
       (-∑ k : Fin n, if i < k then F k k else 0) * A i j
@@ -238,14 +230,12 @@ theorem stepEntry_eq {n : ℕ}
   rfl
 
 theorem iterEntry_zero {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R) :
+    (A F : Matrix (Fin n) (Fin n) R) :
     iterEntry A 0 F = F := by
   rfl
 
 theorem iterEntry_succ {n p : ℕ}
-    (A : Matrix (Fin n) (Fin n) R)
-    (F : Fin n → Fin n → R) :
+    (A F : Matrix (Fin n) (Fin n) R) :
     iterEntry A (p + 1) F =
       fun i j => stepEntry A (iterEntry A p F) i j := by
   rfl
@@ -270,7 +260,7 @@ theorem birdDetSpec_zero
 theorem birdDetSpec_succ {k : ℕ}
     (A : Matrix (Fin (k + 1)) (Fin (k + 1)) R) :
     birdDet A =
-      (-1 : R) ^ k * iterEntry A k (fun i j => A i j) 0 0 := by
+      (-1 : R) ^ k * iterEntry A k A 0 0 := by
   rfl
 
 theorem birdDetSpec_succ_iterMatrix {k : ℕ}
