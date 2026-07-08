@@ -8,7 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Defs
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
-public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Lemmas
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 public import Mathlib.Tactic.Determinant.Bird.Cert
 
 /-!

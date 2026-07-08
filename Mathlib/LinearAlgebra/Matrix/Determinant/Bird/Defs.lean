@@ -199,6 +199,8 @@ open scoped BigOperators
     (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
   diagTerm A F + tailSum A F
 
+/-- Iterate the Bird recurrence step `stepEntry A` a total of `p` times, starting
+from the matrix `F`. -/
 @[expose] def iterEntry {n : ℕ}
     (A : Matrix (Fin n) (Fin n) R) :
     ℕ → Matrix (Fin n) (Fin n) R → Matrix (Fin n) (Fin n) R
