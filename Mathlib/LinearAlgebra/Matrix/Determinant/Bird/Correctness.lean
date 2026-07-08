@@ -15,6 +15,7 @@ import Mathlib.Order.Fin.Basic
 import Mathlib.Order.Fin.Tuple
 import Mathlib.GroupTheory.Perm.Fin
 import Mathlib.Data.Fintype.Fin
+import Mathlib.Data.Finset.Functor
 
 /-!
 # Correctness of Bird's determinant algorithm
@@ -49,6 +50,8 @@ namespace BirdDet
 
 open scoped BigOperators
 
+-- TODO: Make A matrix a variable
+-- TODO: Make Eq1 a variable - comment on use of induction hypothesis in following theorems, eq1_ih
 variable {R : Type*} [CommRing R] {m n : ℕ}
 
 /-- `∑` over `Finset.Ioi i` as an `if`-guarded sum over all of `Fin n`. -/
@@ -115,9 +118,44 @@ theorem strictMono_cons {q : ℕ} {i : Fin n} {α : Fin q → Fin n}
   | zero => simp [Fin.strictMono_iff_lt_succ]
   | succ q => exact strictMono_vecCons.mpr ⟨hi 0, hα⟩
 
-theorem sum_S_succ {M : Type*} [AddCommMonoid M] (p : ℕ) (i : Fin n)
-    (g : (Fin (p + 1) → Fin n) → M) :
+
+-- set_option trace.Meta.synthInstance true in
+-- set_option trace.Meta.isDefEq true in
+theorem foo (p : ℕ) (i : Fin n) :
+  S (p + 1) i =
+    Finset.image
+      (Function.uncurry Fin.cons)
+      ((Finset.Ioi i ×ˢ Finset.univ).filter (Function.uncurry fun (k : Fin n) (α : Fin p → Fin n) =>
+          α ∈ S p k)) := by
+  sorry
+
+-- Classical is for the Monad instance of Finset, Finset.bind needs classical
+open Classical in
+theorem bar (p : ℕ) (i : Fin n) :
+  S (p + 1) i = do
+    let k ← Finset.Ioi i
+    let α ← S p k
+    return Fin.cons k α := by
+  sorry
+
+theorem sum_S_succ (p : ℕ) (i : Fin n)
+    (g : (Fin (p + 1) → Fin n) → R) :
     ∑ α ∈ S (p + 1) i, g α = ∑ k ∈ Finset.Ioi i, ∑ u ∈ S p k, g (Fin.cons k u) := by
+  sorry
+
+-- ⊢ (-1) ^ (p + 1) * ∑ k ∈ Finset.Ioi i, ∑ α ∈ S p k, bminor A k k α =
+--   (-1) ^ (p + 1) * ∑ x ∈ (Finset.Ioi i).sup fun k ↦ Finset.image (Fin.cons k) (S p k), pminor A x
+--
+--
+
+lemma baz {γ δ : Type*} [DecidableEq δ] (s1 : Finset γ) (s2 : γ → Finset δ) (f : δ → R) :
+    ∑ x ∈ s1.sup s2, f x =
+      ∑ k ∈ s1, ∑ y ∈ s2 k, f y := by
+  symm
+  rw [Finset.sum_sigma']
+  -- refine Finset.sum_bij ?_ ?_ ?_ ?_ ?_
+  -- · exact fun x _ ↦ x.2
+  -- · sorry
   sorry
 
 /-! ## Equations (2) and (3): substituting the induction hypothesis -/
@@ -135,7 +173,13 @@ theorem paper_eq2 (A : Matrix (Fin n) (Fin n) R) (p : ℕ) (i : Fin n)
           simp only [Matrix.of_apply, smul_eq_mul, ← Finset.mul_sum]
           ring
     _ = (-1 : R) ^ (p + 1) • ∑ α ∈ S (p + 1) i, pminor A α := by
-          rw [sum_S_succ]
+          rw [bar]
+
+          simp
+          unfold bminor pminor
+
+          -- TODO: restate bar to look like the output of simp
+          -- rw [sum_S_succ]
 
 /-- One step of Bird's scalar recurrence, split into diagonal and tail parts. -/
 theorem iter_succ_entry (A : Matrix (Fin n) (Fin n) R) (p : ℕ) (i j : Fin n) :
@@ -172,15 +216,18 @@ lemma fin_cons_succAbove (p : ℕ) (α : Fin (p + 1) → Fin n) (i : Fin n) (s :
     rfl
 
 lemma fin_cons_removeWith (p : ℕ) (α : Fin (p + 1) → Fin n) (s : Fin (p + 1)) :
+    -- TODO: put complicated part on the LHS (might work better with simp)
+    -- TODO: Consider turning function composition into function application
     α = Fin.cons (α s) (s.removeNth α) ∘ Fin.cycleRange s := by
-  rw [Fin.cons_comp_cycleRange, Fin.insertNth_self_removeNth]
+  simp only [Fin.cons_comp_cycleRange, Fin.insertNth_removeNth, Function.update_eq_self]
+  -- rw [Fin.cons_comp_cycleRange, Fin.insertNth_self_removeNth]
 
 /-- First-column Laplace expansion of a bordered minor -/
 theorem det_bordered_expand (A : Matrix (Fin n) (Fin n) R) (p : ℕ)
     (α : Fin (p + 1) → Fin n) (i j : Fin n) :
-    bminor A i j α
-      = pminor A α * A i j
-        - ∑ s : Fin (p + 1), bminor A i (α s) (s.removeNth α) * A (α s) j := by
+    bminor A i j α =
+      pminor A α * A i j -
+      ∑ s : Fin (p + 1), bminor A i (α s) (s.removeNth α) * A (α s) j := by
   unfold pminor bminor
   rw [Matrix.det_succ_column_zero, Fin.sum_univ_succ, sub_eq_add_neg, ← Finset.sum_neg_distrib]
   simp only [Nat.succ_eq_add_one, Fin.coe_ofNat_eq_mod, Nat.zero_mod, pow_zero,
@@ -195,6 +242,7 @@ theorem det_bordered_expand (A : Matrix (Fin n) (Fin n) R) (p : ℕ)
     rw [mul_right_comm, ← neg_mul]
     congr
     rw [fin_cons_succAbove]
+    -- TODO: try using calc
     conv_lhs => enter [2, 1, 3]; rw [fin_cons_removeWith p α x]
     conv_lhs => enter [2, 1, 2]; rw [← Function.comp_id (Fin.cons i (x.removeNth α))]
     rw [← Matrix.submatrix_submatrix, Matrix.det_permute', Fin.sign_cycleRange]
@@ -219,7 +267,16 @@ theorem det_eq_zero_of_symbol {p : ℕ} (A : Matrix (Fin n) (Fin n) R)
   simp only [Matrix.submatrix_apply, Fin.cons_zero, Fin.cons_succ]
   rw [hq]
 
+-- lemma prod_image_of_pairwise_eq_one [DecidableEq ι] {f : κ → ι} {g : ι → M} {I : Finset κ}
+--     (hf : (I : Set κ).Pairwise fun i j ↦ f i = f j → g (f i) = 1) :
+--     ∏ s ∈ I.image f, g s = ∏ i ∈ I, g (f i) := by
+--   rw [prod_image']
+--   exact fun n hnI => (prod_filter_of_pairwise_eq_one hnI hf).symm
+
+
 /-- The exchange step, the off-diagonal sums of equations (3) and (5) agree -/
+
+-- TODO: Try to remove the `A k j`, `A (α' t) j` factors to match the paper more closely
 theorem exchange (A : Matrix (Fin n) (Fin n) R) (p : ℕ) (i j : Fin n) :
     ∑ k ∈ Finset.Ioi i, ∑ α ∈ S p i, bminor A i k α * A k j
       = ∑ α' ∈ S (p + 1) i, ∑ t : Fin (p + 1),
@@ -233,6 +290,7 @@ theorem paper_eq4 (A : Matrix (Fin n) (Fin n) R) (p : ℕ) (i j : Fin n) :
       = ∑ α ∈ S (p + 1) i, bminor A i j α := by
   rw [paper_eq5 A p i j]
   congr 1
+
   exact exchange A p i j
 
 /-! ## Bird's Equation (1) -/
