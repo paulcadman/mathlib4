@@ -4,7 +4,7 @@ https://github.com/leanprover-community/mathlib/blob/4f4a1c875d0baa92ab5d92f3fb1
 -/
 import Mathlib.GroupTheory.Perm.Fin
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
-import Mathlib.LinearAlgebra.Matrix.Determinant.Bird
+import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
 import Mathlib.LinearAlgebra.Matrix.Notation
 import Mathlib.RingTheory.Polynomial.Basic
 import Mathlib.Tactic.Determinant.Bird
@@ -192,10 +192,16 @@ example (ι : Type*) [Inhabited ι] : Matrix.replicateCol ι (fun (_ : Fin 3) =>
 section BirdDet
 
 open BirdDet
+open scoped BigOperators
 
 variable
   {R : Type*}
   [CommRing R]
+
+example (A : Array R) (hA : A.size = 3 * 3) :
+    birdDet 3 A =
+      Spec.birdDet (Matrix.ofArray (m := 3) (n := 3) A hA) := by
+  exact birdDet_eq_birdDetSpec A hA
 
 example : birdDet 0 #[] = (1 : ℤ) := by
   eval_det
@@ -247,6 +253,25 @@ lemma test_case_11 :
         1 , X 2, (X 2) ^ 2] = (X 0 - X 1) * (X 1 - X 2) * (X 2 - X 0) := by
   simp only [norm_det]
   ring
+
+example (a b c d : R) :
+    Matrix.det (Matrix.ofArray (m := 2) (n := 2) #[a, b, c, d] rfl) =
+      a * d - b * c := by
+  simp only [norm_matrix_det]
+  ring
+
+example :
+  Matrix.det (R := ℤ) (
+    Matrix.ofArray (m := 8) (n := 8)
+    #[ 2,  0, -1,  0,  0,  0,  0,  0,
+       0,  2,  0, -1,  0,  0,  0,  0,
+      -1,  0,  2, -1,  0,  0,  0,  0,
+       0, -1, -1,  2, -1,  0,  0,  0,
+       0,  0,  0, -1,  2, -1,  0,  0,
+       0,  0,  0,  0, -1,  2, -1,  0,
+       0,  0,  0,  0,  0, -1,  2, -1,
+       0,  0,  0,  0,  0,  0, -1,  2] rfl) = 1 := by
+  simp only [norm_matrix_det]
 
 end BirdDet
 
