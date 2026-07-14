@@ -6,8 +6,10 @@ Authors: Ellen Arlt, Blair Shi, Sean Leather, Mario Carneiro, Johan Commelin, Lu
 module
 
 public import Mathlib.Algebra.Module.Pi
+public import Mathlib.Data.Fin.Basic
 public import Mathlib.Logic.Nontrivial.Basic
 public import Mathlib.Tactic.CrossRefAttribute
+public import Batteries.Data.Fin.Lemmas
 
 /-!
 # Matrices
@@ -93,6 +95,23 @@ theorem of_apply (f : m → n → α) (i j) : of f i j = f i j :=
 @[simp]
 theorem of_symm_apply (f : Matrix m n α) (i j) : of.symm f i j = f i j :=
   rfl
+
+/-- Construct a matrix from an array in row-major ordering. -/
+def ofArray {m n : ℕ} (A : Array R) (hA : A.size = m * n) : Matrix (Fin m) (Fin n) R :=
+  fun i j => A[Fin.mkDivMod i j]
+
+@[simp]
+theorem ofArray_apply {m n : ℕ} (A : Array R) (hA : A.size = m * n) (i : Fin m) (j : Fin n) :
+    ofArray A hA i j = A[Fin.mkDivMod i j] := rfl
+
+theorem ofArray_toArray_ofFn {m n : ℕ} (A : Matrix (Fin m) (Fin n) α) :
+    ofArray (List.ofFn (fun k : Fin (m * n) => A k.divNat k.modNat)).toArray
+      (by simp only [List.toArray_ofFn, Array.size_ofFn]) = A := by
+  ext i j
+  simp only [List.toArray_ofFn, ofArray_apply, Fin.getElem_fin, Fin.coe_mkDivMod,
+    Array.getElem_ofFn]
+  change A (Fin.mkDivMod i j).divNat (Fin.mkDivMod i j).modNat = A i j
+  simp
 
 /-- `M.map f` is the matrix obtained by applying `f` to each entry of the matrix `M`.
 

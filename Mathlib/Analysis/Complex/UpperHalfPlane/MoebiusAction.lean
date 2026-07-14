@@ -307,9 +307,7 @@ theorem modular_S_smul (z : ℍ) :
 
 theorem modular_T_zpow_smul (z : ℍ) (n : ℤ) : ModularGroup.T ^ n • z = (n : ℝ) +ᵥ z := by
   rw [UpperHalfPlane.ext_iff, coe_vadd, add_comm, coe_specialLinearGroup_apply]
-  simp [ModularGroup.coe_T_zpow,
-    of_apply, cons_val_zero, Complex.ofReal_one, one_mul, cons_val_one,
-    zero_mul, zero_add, div_one]
+  simp [ModularGroup.coe_T_zpow]
 
 theorem modular_T_smul (z : ℍ) : ModularGroup.T • z = (1 : ℝ) +ᵥ z := by
   simpa only [zpow_one, Int.cast_one] using modular_T_zpow_smul z 1
@@ -383,7 +381,9 @@ lemma coe_J_smul (τ : ℍ) : (↑(J • τ) : ℂ) = -conj ↑τ := by
 
 @[simp] lemma val_J : J.val = !![-1, 0; 0, 1] := rfl
 
-@[simp] lemma J_sq : J ^ 2 = 1 := by ext; simp [J, sq, Matrix.one_fin_two]
+@[simp] lemma J_sq : J ^ 2 = 1 := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [J, sq, Matrix.mul_apply, Fin.sum_univ_succ]
 
 @[simp] lemma det_J : J.det = -1 := by ext; simp [J]
 
@@ -393,7 +393,7 @@ lemma coe_J_smul (τ : ℍ) : (↑(J • τ) : ℂ) = -conj ↑τ := by
 
 @[simp]
 lemma denom_J_mul (g : GL (Fin 2) ℝ) (τ : ℂ) : denom (J * g) τ = denom g τ := by
-  simp [denom, vecMul, vecHead, vecTail]
+  simp [denom, Matrix.mul_apply, Fin.sum_univ_succ]
 
 end J
 

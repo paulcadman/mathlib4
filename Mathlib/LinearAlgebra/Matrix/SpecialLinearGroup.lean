@@ -371,15 +371,14 @@ section SpecialCases
 open scoped MatrixGroups
 
 theorem SL2_inv_expl_det (A : SL(2, R)) :
-    det ![![A.1 1 1, -A.1 0 1], ![-A.1 1 0, A.1 0 0]] = 1 := by
+    det !![A.1 1 1, -A.1 0 1; -A.1 1 0, A.1 0 0] = 1 := by
   simpa [-det_coe, Matrix.det_fin_two, mul_comm] using A.2
 
 theorem SL2_inv_expl (A : SL(2, R)) :
-    A⁻¹ = ⟨![![A.1 1 1, -A.1 0 1], ![-A.1 1 0, A.1 0 0]], SL2_inv_expl_det A⟩ := by
+    A⁻¹ = ⟨!![A.1 1 1, -A.1 0 1; -A.1 1 0, A.1 0 0], SL2_inv_expl_det A⟩ := by
   ext
   have := Matrix.adjugate_fin_two A.1
   rw [coe_inv, this]
-  simp
 
 theorem fin_two_induction (P : SL(2, R) → Prop)
     (h : ∀ (a b c d : R) (hdet : a * d - b * c = 1), P ⟨!![a, b; c, d], by rwa [det_fin_two_of]⟩)
@@ -395,7 +394,9 @@ theorem fin_two_exists_eq_mk_of_apply_zero_one_eq_zero {R : Type*} [Field R] (g 
   replace hg : c = 0 := by simpa using hg
   have had : a * d = 1 := by rwa [hg, mul_zero, sub_zero] at h_det
   refine ⟨a, b, left_ne_zero_of_mul_eq_one had, ?_⟩
-  simp_rw [eq_inv_of_mul_eq_one_right had, hg]
+  apply Subtype.ext
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [eq_inv_of_mul_eq_one_right had, hg]
 
 lemma isCoprime_row (A : SL(2, R)) (i : Fin 2) : IsCoprime (A i 0) (A i 1) := by
   refine match i with
@@ -847,7 +848,7 @@ theorem coe_T_zpow (n : ℤ) : (T ^ n).1 = !![1, n; 0, 1] := by
 @[simp]
 theorem T_pow_mul_apply_one (n : ℤ) (g : SL(2, ℤ)) : (T ^ n * g) 1 = g 1 := by
   ext j
-  simp [coe_T_zpow, Matrix.vecMul, dotProduct, Fin.sum_univ_succ]
+  fin_cases j <;> simp [coe_T_zpow, Matrix.mul_apply, Fin.sum_univ_succ]
 
 @[simp]
 theorem T_mul_apply_one (g : SL(2, ℤ)) : (T * g) 1 = g 1 := by
@@ -858,10 +859,8 @@ theorem T_inv_mul_apply_one (g : SL(2, ℤ)) : (T⁻¹ * g) 1 = g 1 := by
   simpa using T_pow_mul_apply_one (-1) g
 
 lemma S_mul_S_eq : (S : Matrix (Fin 2) (Fin 2) ℤ) * S = -1 := by
-  simp only [S, Int.reduceNeg, cons_mul, Nat.succ_eq_add_one, Nat.reduceAdd,
-    vecMul_cons, head_cons, zero_smul, tail_cons, neg_smul, one_smul, neg_cons, neg_zero, neg_empty,
-    empty_vecMul, add_zero, zero_add, empty_mul, Equiv.symm_apply_apply]
-  exact Eq.symm (eta_fin_two (-1))
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [S, Matrix.mul_apply, Fin.sum_univ_succ]
 
 lemma T_S_rel : S • S • S • T • S • T • S = T⁻¹ := by
   ext i j

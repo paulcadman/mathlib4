@@ -3,6 +3,7 @@ manually ported from
 https://github.com/leanprover-community/mathlib/blob/4f4a1c875d0baa92ab5d92f3fb1bb258ad9f3e5b/test/matrix.lean
 -/
 import Mathlib.GroupTheory.Perm.Fin
+import Mathlib.Data.Matrix.Reflection
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
 import Mathlib.LinearAlgebra.Matrix.Notation
@@ -90,7 +91,7 @@ open Lean Meta
 
 run_elab do
   let x := !![1, 2; 3, 4]
-  guard (← withReducible <| isDefEq (toExpr x) q(!![1, 2; 3, 4]))
+  guard (← withReducible <| isDefEq (toExpr x) q(Matrix.of ![![1, 2], ![3, 4]]))
 
 end to_expr
 
@@ -113,6 +114,24 @@ section delaborators
 
 end delaborators
 
+example {a b c d : α} : !![a, b; c, d] 1 0 = c := by
+  simp
+
+example {a b c d e f : α} :
+    transpose !![a, b, c; d, e, f] = !![a, d; b, e; c, f] := by
+  simp
+
+example (f : α → β) {a b c d : α} :
+    (!![a, b; c, d]).map f = !![f a, f b; f c, f d] := by
+  simp
+
+example {a b c d : β} : -!![a, b; c, d] = !![-a, -b; -c, -d] := by
+  simp
+
+example (r : α) {a b c d : α} :
+    r • !![a, b; c, d] = !![r • a, r • b; r • c, r • d] := by
+  simp
+
 example {a a' b b' c c' d d' : α} :
   !![a, b; c, d] + !![a', b'; c', d'] = !![a + a', b + b'; c + c', d + d'] := by
   simp
@@ -124,58 +143,40 @@ example {a a' b b' c c' d d' : β} :
 example {a a' b b' c c' d d' : α} :
   !![a, b; c, d] * !![a', b'; c', d'] =
     !![a * a' + b * c', a * b' + b * d'; c * a' + d * c', c * b' + d * d'] := by
-  simp
+  exact (Matrix.mulᵣ_eq _ _).symm
 
 example {a b c d x y : α} :
   !![a, b; c, d] *ᵥ ![x, y] = ![a * x + b * y, c * x + d * y] := by
   simp
 
-/-!
-TODO: the below lemmas rely on simp lemmas assuming the indexing numerals are assembled from
-`bit0` and `bit1`, so no longer work in Lean 4
--/
-/-
 example {a b c d : α} : submatrix !![a, b; c, d] ![1, 0] ![0] = !![c; a] := by
-  ext; simp
--/
+  simp
+
 example {α : Type _} [CommRing α] {a b c d : α} :
     Matrix.det !![a, b; c, d] = a * d - b * c := by
-  simp? [Matrix.det_succ_row_zero, Fin.sum_univ_succ] says
-    simp only [det_succ_row_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, of_apply,
-      cons_val', cons_val_fin_one, cons_val_zero, det_unique, Fin.default_eq_zero, submatrix_apply,
-      Fin.succ_zero_eq_one, cons_val_one, Fin.sum_univ_succ, Fin.coe_ofNat_eq_mod, Nat.zero_mod,
-      pow_zero, one_mul, Fin.zero_succAbove, Finset.univ_unique, Fin.val_succ, Fin.val_eq_zero,
-      zero_add, pow_one, cons_val_succ, neg_mul, ne_eq, Fin.succ_ne_zero, not_false_eq_true,
-      Fin.succAbove_ne_zero_zero, Finset.sum_neg_distrib, Finset.sum_const, Finset.card_singleton,
-      one_smul]
-  ring
+  simp [Matrix.det_succ_row_zero, Fin.sum_univ_succ]
+  ring_nf
 
 example {α : Type _} [CommRing α] {a b c d e f g h i : α} :
     Matrix.det !![a, b, c; d, e, f; g, h, i] =
       a * e * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e * g := by
-  simp? [Matrix.det_succ_row_zero, Fin.sum_univ_succ] says
-    simp only [det_succ_row_zero, Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue, of_apply,
-      cons_val', cons_val_fin_one, cons_val_zero, submatrix_apply, Fin.succ_zero_eq_one,
-      cons_val_one, submatrix_submatrix, det_unique, Fin.default_eq_zero, Function.comp_apply,
-      Fin.succ_one_eq_two, cons_val, Fin.sum_univ_succ, Fin.coe_ofNat_eq_mod, Nat.zero_mod,
-      pow_zero, one_mul, Fin.zero_succAbove, Finset.univ_unique, Fin.val_succ, Fin.val_eq_zero,
-      zero_add, pow_one, neg_mul, ne_eq, Fin.succ_ne_zero, not_false_eq_true,
-      Fin.succAbove_ne_zero_zero, Finset.sum_neg_distrib, Finset.sum_singleton, cons_val_succ,
-      Fin.succ_succAbove_one, even_two, Even.neg_pow, one_pow, Finset.sum_const,
-      Finset.card_singleton, one_smul]
-  ring
+  simp [Matrix.det_succ_row_zero, Fin.sum_univ_succ]
+  ring_nf
 
 example {R : Type*} [Semiring R] {a b c d : R} :
     !![a, b] * (transpose !![c, d]) = !![a * c + b * d] := by
   ext i j
   fin_cases i
   fin_cases j
-  simp [Matrix.vecHead, Matrix.vecTail]
+  simp [Matrix.mul_apply, Fin.sum_univ_succ]
 
 /- Check that matrix notation works with `row` and `col` -/
 example : Matrix.replicateRow _ ![1, 1] = !![1, 1] := by
   ext i j
-  simp
+  fin_cases i
+  fin_cases j
+  · rfl
+  · rfl
 
 example : Matrix.replicateCol _ ![1, 1] = !![1; 1] := by
   ext i j
@@ -247,6 +248,23 @@ lemma test_case_11 :
         1 , X 2, (X 2) ^ 2] = (X 0 - X 1) * (X 1 - X 2) * (X 2 - X 0) := by
   simp only [norm_det]
   ring
+
+example (a b c d : R) :
+    Matrix.det !![a, b; c, d] = a * d - b * c := by
+  norm_det
+  ring
+
+example :
+  Matrix.det (R := ℤ)
+    !![ 2,  0, -1,  0,  0,  0,  0,  0;
+        0,  2,  0, -1,  0,  0,  0,  0;
+       -1,  0,  2, -1,  0,  0,  0,  0;
+        0, -1, -1,  2, -1,  0,  0,  0;
+        0,  0,  0, -1,  2, -1,  0,  0;
+        0,  0,  0,  0, -1,  2, -1,  0;
+        0,  0,  0,  0,  0, -1,  2, -1;
+        0,  0,  0,  0,  0,  0, -1,  2] = 1 := by
+  norm_det
 
 end BirdDet
 

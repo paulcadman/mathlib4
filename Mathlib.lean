@@ -5107,6 +5107,7 @@ public import Mathlib.LinearAlgebra.Matrix.Circulant
 public import Mathlib.LinearAlgebra.Matrix.ConjTranspose
 public import Mathlib.LinearAlgebra.Matrix.Defs
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Misc
 public import Mathlib.LinearAlgebra.Matrix.Determinant.TotallyUnimodular
@@ -5138,6 +5139,8 @@ public import Mathlib.LinearAlgebra.Matrix.MvPolynomial
 public import Mathlib.LinearAlgebra.Matrix.Nondegenerate
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.LinearAlgebra.Matrix.Notation
+public import Mathlib.LinearAlgebra.Matrix.Notation.Basic
+public import Mathlib.LinearAlgebra.Matrix.Notation.Operations
 public import Mathlib.LinearAlgebra.Matrix.Orthogonal
 public import Mathlib.LinearAlgebra.Matrix.Permanent
 public import Mathlib.LinearAlgebra.Matrix.Permutation
@@ -5161,6 +5164,7 @@ public import Mathlib.LinearAlgebra.Matrix.Trace
 public import Mathlib.LinearAlgebra.Matrix.Transvection
 public import Mathlib.LinearAlgebra.Matrix.Unique
 public import Mathlib.LinearAlgebra.Matrix.Vec
+public import Mathlib.LinearAlgebra.Matrix.VecNotation
 public import Mathlib.LinearAlgebra.Matrix.WithConv
 public import Mathlib.LinearAlgebra.Matrix.ZMatrix
 public import Mathlib.LinearAlgebra.Matrix.ZPow

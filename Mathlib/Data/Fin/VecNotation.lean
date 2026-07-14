@@ -8,12 +8,11 @@ module
 public import Mathlib.Data.Fin.Tuple.Basic
 
 /-!
-# Matrix and vector notation
+# Vector notation
 
-This file defines notation for vectors and matrices. Given `a b c d : α`,
-the notation allows us to write `![a, b, c, d] : Fin 4 → α`.
-Nesting vectors gives coefficients of a matrix, so `![![a, b], ![c, d]] : Fin 2 → Fin 2 → α`.
-In later files we introduce `!![a, b; c, d]` as notation for `Matrix.of ![![a, b], ![c, d]]`.
+This file defines notation for vectors. Given `a b c d : α`, the notation allows us to write
+`![a, b, c, d] : Fin 4 → α`. Nesting vectors gives a function of two indices, such as
+`![![a, b], ![c, d]] : Fin 2 → Fin 2 → α`.
 
 ## Main definitions
 
