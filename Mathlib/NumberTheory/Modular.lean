@@ -210,20 +210,22 @@ theorem tendsto_lcRow0 {cd : Fin 2 → ℤ} (hcd : IsCoprime (cd 0) (cd 1)) :
   convert! hf₂.tendsto_cocompact.comp (hf₁.comp Subtype.coe_injective.tendsto_cofinite) using 1
   ext ⟨g, rfl⟩ i j : 3
   fin_cases i <;> [fin_cases j; skip]
-  -- the following are proved by `simp`, but it is replaced by `simp only` to avoid timeouts.
+  -- The larger expressions are reduced in stages to avoid `simp` timeouts.
   · simp only [Fin.isValue, Int.cast_one, map_apply_coe, RingHom.mapMatrix_apply,
       Int.coe_castRingHom, lcRow0_apply, map_apply, Fin.zero_eta, Function.comp_apply,
       of_apply, cons_val', cons_val_zero, empty_val', cons_val_fin_one, lcRow0Extend_apply,
       LinearMap.GeneralLinearGroup.coeFn_generalLinearEquiv, GeneralLinearGroup.coe_toLin,
       val_planeConformalMatrix, neg_neg, mulVecLin_apply, mulVec, dotProduct, Fin.sum_univ_two,
-      cons_val_one, mB, f₁]
+      mB, f₁]
+    simp
   · convert! congr_arg (fun n : ℤ => (-n : ℝ)) g.det_coe.symm using 1
     simp only [Fin.zero_eta, Function.comp_apply, lcRow0Extend_apply, cons_val_zero,
       LinearMap.GeneralLinearGroup.coeFn_generalLinearEquiv, GeneralLinearGroup.coe_toLin,
       mulVecLin_apply, mulVec, dotProduct, det_fin_two, f₁]
-    simp only [Fin.isValue, Fin.mk_one, val_planeConformalMatrix, neg_neg, of_apply, cons_val',
-      empty_val', cons_val_fin_one, cons_val_one, map_apply, Fin.sum_univ_two,
-      cons_val_zero, neg_mul, Int.cast_sub, Int.cast_mul, neg_sub]
+    simp only [Fin.isValue, Fin.mk_one, val_planeConformalMatrix, neg_neg, Matrix.ofArray_apply,
+      Fin.getElem_fin, Fin.coe_mkDivMod, map_apply, Fin.sum_univ_two, Int.cast_sub,
+      Int.cast_mul, neg_sub]
+    simp
     ring
   · rfl
 
@@ -346,8 +348,10 @@ theorem g_eq_of_c_eq_one (hc : g 1 0 = 1) : g = T ^ g 0 0 * S * T ^ g 1 1 := by
   replace hg : g 0 1 = g 0 0 * g 1 1 - 1 := by rw [det_fin_two, hc] at hg; lia
   refine Subtype.ext ?_
   conv_lhs => rw [(g : Matrix _ _ ℤ).eta_fin_two]
-  simp only [hg, sub_eq_add_neg, hc, coe_mul, coe_T_zpow, coe_S, mul_fin_two, mul_zero, mul_one,
-    zero_add, one_mul, add_zero, zero_mul]
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [hg, hc, coe_mul, coe_T_zpow, coe_S, mul_fin_two]
+  ring
 
 /-- If `1 < |z|`, then `|S • z| < 1`. -/
 theorem normSq_S_smul_lt_one (h : 1 < normSq z) : normSq ↑(S • z) < 1 := by
@@ -571,9 +575,9 @@ private lemma case_c_one_d_one (hz : z ∈ 𝒟) (hg : g • z ∈ 𝒟) (hg' : 
   have hgeq : g = T ^ g 0 0 * S * T := by
     refine Subtype.ext ?_
     rw [coe_mul, coe_mul, coe_T_zpow, coe_S, coe_T, mul_fin_two, mul_fin_two]
-    ring_nf
     ext i j
-    fin_cases i <;> fin_cases j <;> [tauto; simp; tauto; tauto]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.ofArray_apply, Fin.getElem_fin, Fin.coe_mkDivMod, hc, hd]
     grind [g.property, det_fin_two]
   rw [hgeq]
   obtain ⟨hnorm, hre⟩ : normSq z = 1 ∧ z.re = -1 / 2 := by
@@ -610,11 +614,10 @@ private lemma case_c_one_d_neg_one (hz : z ∈ 𝒟) (hg : g • z ∈ 𝒟) (hg
   have hgeq : g = T ^ g 0 0 * S * T⁻¹ := by
     refine Subtype.ext ?_
     rw [coe_mul, coe_mul, coe_T_zpow, coe_S, ← zpow_neg_one, coe_T_zpow, mul_fin_two, mul_fin_two]
-    ring_nf
     ext i j
-    fin_cases i <;> fin_cases j <;> [tauto; skip; tauto; tauto]
-    simp [this]
-    ring_nf
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.ofArray_apply, Fin.getElem_fin, Fin.coe_mkDivMod, hc, hd, this]
+    ring
   have hnorm : ‖(z : ℂ) - 1‖ ≤ 1 := by
     convert! hg' using 2
     simp [denom, hc, hd, sub_eq_add_neg]

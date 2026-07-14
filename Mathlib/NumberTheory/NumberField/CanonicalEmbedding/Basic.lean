@@ -577,7 +577,9 @@ theorem det_matrixToStdBasis :
           det_reindex_self, det_blockDiagonal]
   _ = ∏ _k : { w : InfinitePlace K // IsComplex w }, (2⁻¹ * Complex.I) := by
       refine prod_congr (Eq.refl _) (fun _ _ => ?_)
-      simp [field]; ring
+      rw [Matrix.det_smul]
+      simp [Matrix.det_fin_two]
+      ring
   _ = (2⁻¹ * Complex.I) ^ Fintype.card {w : InfinitePlace K // IsComplex w} := by
       rw [prod_const, Fintype.card]
 
@@ -593,8 +595,7 @@ theorem stdBasis_repr_eq_matrixToStdBasis_mul (x : (K →+* ℂ) → ℂ)
     mulVec, dotProduct, Function.comp_apply, index, Fintype.sum_sum_type,
     diagonal_one, reindex_apply, ← univ_product_univ, sum_product,
     indexEquiv_apply_isReal, Fin.sum_univ_two, indexEquiv_apply_isComplex_fst,
-    indexEquiv_apply_isComplex_snd, smul_of, smul_cons, smul_eq_mul,
-    mul_one, Matrix.smul_empty, Equiv.prodComm_symm, Equiv.coe_prodComm]
+    indexEquiv_apply_isComplex_snd, Equiv.prodComm_symm, Equiv.coe_prodComm]
   cases c with
   | inl w =>
       simp_rw [stdBasis_apply_isReal, fromBlocks_apply₁₁, fromBlocks_apply₁₂,
@@ -605,16 +606,20 @@ theorem stdBasis_repr_eq_matrixToStdBasis_mul (x : (K →+* ℂ) → ℂ)
     rcases c with ⟨w, j⟩
     fin_cases j
     · simp only [Fin.zero_eta, Fin.isValue, stdBasis_apply_isComplex_fst, re_eq_add_conj,
-        mul_neg, fromBlocks_apply₂₁, Matrix.zero_apply, zero_mul, sum_const_zero,
-        fromBlocks_apply₂₂, submatrix_apply, Prod.swap_prod_mk, blockDiagonal_apply, of_apply,
-        cons_val', cons_val_zero, empty_val', cons_val_fin_one, ite_mul, cons_val_one,
+        fromBlocks_apply₂₁, Matrix.zero_apply, zero_mul, sum_const_zero,
+        fromBlocks_apply₂₂, submatrix_apply, Prod.swap_prod_mk, blockDiagonal_apply,
+        Matrix.smul_apply, smul_eq_mul, Matrix.ofArray_apply, Fin.getElem_fin, Fin.coe_mkDivMod,
+        ite_mul,
         sum_add_distrib, sum_ite_eq, mem_univ, ↓reduceIte, ← hx (embedding w), zero_add]
+      simp
       ring
     · simp only [Fin.mk_one, Fin.isValue, stdBasis_apply_isComplex_snd, im_eq_sub_conj,
-        mul_neg, fromBlocks_apply₂₁, Matrix.zero_apply, zero_mul, sum_const_zero,
-        fromBlocks_apply₂₂, submatrix_apply, Prod.swap_prod_mk, blockDiagonal_apply, of_apply,
-        cons_val', cons_val_zero, empty_val', cons_val_fin_one, cons_val_one, ite_mul, neg_mul,
+        fromBlocks_apply₂₁, Matrix.zero_apply, zero_mul, sum_const_zero,
+        fromBlocks_apply₂₂, submatrix_apply, Prod.swap_prod_mk, blockDiagonal_apply,
+        Matrix.smul_apply, smul_eq_mul, Matrix.ofArray_apply, Fin.getElem_fin, Fin.coe_mkDivMod,
+        ite_mul,
         sum_add_distrib, sum_ite_eq, mem_univ, ↓reduceIte, ← hx (embedding w), zero_add]
+      simp
       ring_nf; simp [field]
 
 end stdBasis

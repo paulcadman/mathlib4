@@ -962,8 +962,7 @@ lemma discr_of_degree_eq_two {f : R[X]} (hf : f.degree = 2) :
     fin_cases i <;> fin_cases j <;>
       simp [e, sylvesterDeriv, sylvester, coeff_derivative, mul_comm, Fin.addCases,
         one_add_one_eq_two, hf, Fin.cast]
-  simp only [this, Matrix.det_fin_three, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
-    Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.cons_val, hf]
+  simp [this, Matrix.det_fin_three, hf]
   ring_nf
 
 /-- Relation between the resultant and the discriminant.
@@ -995,14 +994,13 @@ private lemma sylvesterDeriv_of_natDegree_eq_three {f : R[X]} (hf : f.natDegree 
     Nat.add_one_sub_one, Fin.val_castLT, mem_Icc, Fin.val_fin_le, Fin.val_subNat, Fin.val_cast,
     tsub_le_iff_right, coeff_derivative, eq_rec_constant, dite_eq_ite, Nat.reduceMul, Nat.reduceSub,
     Nat.cast_ofNat, Matrix.reindex_apply, finCongr_symm, Matrix.submatrix_apply, finCongr_apply,
-    Fin.cast_mk, Matrix.updateRow_apply, Fin.mk.injEq, Matrix.of_apply, Fin.mk_le_mk, one_mul,
-    Matrix.cons_val', Matrix.cons_val_fin_one]
+    Fin.cast_mk, Matrix.updateRow_apply, Fin.mk.injEq, Matrix.of_apply, Fin.mk_le_mk, one_mul]
   have hi' : i ∈ Finset.range 5 := Finset.mem_range.mpr hi
   have hj' : j ∈ Finset.range 5 := Finset.mem_range.mpr hj
   fin_cases hi' <;>
   · simp only [and_true, Fin.isValue, Fin.mk_one, Fin.reduceFinMk, Fin.zero_eta,
-      le_add_iff_nonneg_left, Matrix.cons_val_one, Matrix.cons_val_zero, Matrix.cons_val,
-      Nat.reduceAdd, Nat.reduceEqDiff, Nat.reduceLeDiff, nonpos_iff_eq_zero,
+      le_add_iff_nonneg_left, Nat.reduceAdd, Nat.reduceEqDiff, Nat.reduceLeDiff,
+      nonpos_iff_eq_zero,
       OfNat.one_ne_ofNat, ↓reduceIte, zero_add, zero_le]
     fin_cases hj' <;> simp [mul_comm, one_add_one_eq_two, (by norm_num : (2 : R) + 1 = 3)]
 

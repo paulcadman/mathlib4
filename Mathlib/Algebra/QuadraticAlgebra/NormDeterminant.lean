@@ -38,7 +38,8 @@ theorem det_toLinearMap_eq_norm (z : QuadraticAlgebra R a b) :
   rw [LinearMap.toMatrix_symm, Matrix.repr_toLin]
   ext i
   fin_cases i
-    <;> simp
-    <;> ring
+  · simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]
+  · simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]
+    ring
 
 end QuadraticAlgebra
