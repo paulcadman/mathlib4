@@ -212,31 +212,29 @@ def tailSum {n : ℕ}
     (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
   .of fun i j => ∑ k : Fin n, if i < k then F i k * A k j else 0
 
-/-- One entry of one Matrix/Fin Bird recurrence step. -/
-def stepEntry {n : ℕ}
-    (A F : Matrix (Fin n) (Fin n) R) : Matrix (Fin n) (Fin n) R :=
-  diagTerm A F + tailSum A F
-
 /-- A version of the Bird determinant algorithm that is stated in terms of `Matrix`. -/
 def birdDet {n : ℕ}
     (A : Matrix (Fin n) (Fin n) R) : R :=
   match n with
   | 0 => 1
-  | k + 1 => (-1 : R) ^ k * (stepEntry A)^[k] A 0 0
+  | k + 1 => (-1 : R) ^ k * (diagTerm A + tailSum A)^[k] A 0 0
 
 /-- Unfold the diagonal tail sum in the matrix specification. -/
 theorem diagSum_eq {n : ℕ} (F : Matrix (Fin n) (Fin n) R) (i : Fin n) :
     diagSum F i = ∑ k : Fin n, if i < k then F k k else 0 := by
   rfl
 
-theorem stepEntry_eq {n : ℕ}
-    (A F : Matrix (Fin n) (Fin n) R) :
-    stepEntry A F =
-      .of fun i j ↦ (-∑ k : Fin n, if i < k then F k k else 0) * A i j
-        + ∑ k : Fin n, if i < k then F i k * A k j else 0 := by
-  ext i j
-  rw [stepEntry, diagTerm, tailSum]
-  simp only [Matrix.add_apply, Matrix.of_apply, diagSum_eq]
+/-- Evaluate the diagonal contribution to one matrix recurrence step. -/
+theorem diagTerm_apply {n : ℕ}
+    (A F : Matrix (Fin n) (Fin n) R) (i j : Fin n) :
+    diagTerm A F i j = -diagSum F i * A i j := by
+  rfl
+
+/-- Evaluate the upper-tail contribution to one matrix recurrence step. -/
+theorem tailSum_apply {n : ℕ}
+    (A F : Matrix (Fin n) (Fin n) R) (i j : Fin n) :
+    tailSum A F i j = ∑ k : Fin n, if i < k then F i k * A k j else 0 := by
+  rfl
 
 theorem birdDetSpec_zero
     (A : Matrix (Fin 0) (Fin 0) R) :
@@ -246,7 +244,7 @@ theorem birdDetSpec_zero
 theorem birdDetSpec_succ {k : ℕ}
     (A : Matrix (Fin (k + 1)) (Fin (k + 1)) R) :
     birdDet A =
-      (-1 : R) ^ k * (stepEntry A)^[k] A 0 0 :=
+      (-1 : R) ^ k * (diagTerm A + tailSum A)^[k] A 0 0 :=
   by rw [birdDet]
 
 end Spec
