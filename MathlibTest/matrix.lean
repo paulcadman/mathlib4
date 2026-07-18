@@ -7,7 +7,7 @@ import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
 import Mathlib.LinearAlgebra.Matrix.Notation
 import Mathlib.RingTheory.Polynomial.Basic
-import Mathlib.Tactic.Determinant.Bird
+import Mathlib.Tactic.NormDet
 import Qq
 
 open Qq
@@ -190,65 +190,58 @@ example (ι : Type*) [Inhabited ι] : Matrix.replicateCol ι (fun (_ : Fin 3) =>
   simp_all
   rfl
 
-section BirdDet
-
-open BirdDet
+section NormDet
 
 variable
   {R : Type*}
   [CommRing R]
 
-example : birdDet 0 #[] = (1 : ℤ) := by
+example : Matrix.det (R := ℤ) !![] = 1 := by
   eval_det
 
-example : birdDet 1 #[-1] = -1 := by
+example : Matrix.det (R := ℤ) !![-1] = -1 := by
   eval_det
 
-example : birdDet 2 #[1, 2, 3, 4] = -2 := by
+example : Matrix.det (R := ℤ) !![1, 2; 3, 4] = -2 := by
   eval_det
 
-example : birdDet 2 (let A := #[1, 2, 3, 4]; A) = -2 := by
-  eval_det
-
-example (a b c d : R) :
-    birdDet 2 #[a, b, c, d] = a * d - b * c := by
+example (a b c d : R) : Matrix.det !![a, b; c, d] = a * d - b * c := by
   eval_det
   ring
 
-example (a b c d : R) :
-    birdDet 2 #[a, b, c, d] = a * d - b * c := by
+example (a b c d : R) : Matrix.det !![a, b; c, d] = a * d - b * c := by
   simp only [norm_det]
   ring
 
-example : birdDet 2 #[1, 2, 2, 4] + birdDet 2 #[2, 3, 4, 5] = -2 := by
+example :
+    Matrix.det (R := ℤ) !![1, 2; 2, 4] + Matrix.det (R := ℤ) !![2, 3; 4, 5] = -2 := by
   simp only [norm_det]
   norm_num
 
-example : birdDet 2 #[birdDet 2 #[2, 3, 4, 5], 2, 2, 4] = -12 := by
+example :
+    Matrix.det (R := ℤ) !![Matrix.det (R := ℤ) !![2, 3; 4, 5], 2; 2, 4] = -12 := by
   simp only [norm_det]
 
 example :
-  birdDet 8
-    #[ 2,  0, -1,  0,  0,  0,  0,  0,
-       0,  2,  0, -1,  0,  0,  0,  0,
-      -1,  0,  2, -1,  0,  0,  0,  0,
-       0, -1, -1,  2, -1,  0,  0,  0,
-       0,  0,  0, -1,  2, -1,  0,  0,
-       0,  0,  0,  0, -1,  2, -1,  0,
-       0,  0,  0,  0,  0, -1,  2, -1,
-       0,  0,  0,  0,  0,  0, -1,  2] = 1 := by
-  simp only [norm_det]
+  Matrix.det (R := ℤ)
+    !![ 2,  0, -1,  0,  0,  0,  0,  0;
+        0,  2,  0, -1,  0,  0,  0,  0;
+       -1,  0,  2, -1,  0,  0,  0,  0;
+        0, -1, -1,  2, -1,  0,  0,  0;
+        0,  0,  0, -1,  2, -1,  0,  0;
+        0,  0,  0,  0, -1,  2, -1,  0;
+        0,  0,  0,  0,  0, -1,  2, -1;
+        0,  0,  0,  0,  0,  0, -1,  2] = 1 := by
+  eval_det
 
 open MvPolynomial in
 lemma test_case_11 :
-    birdDet (R := MvPolynomial (Fin 3) R)
-      3
-      #[1 , X 0, (X 0) ^ 2,
-        1 , X 1, (X 1) ^ 2,
-        1 , X 2, (X 2) ^ 2] = (X 0 - X 1) * (X 1 - X 2) * (X 2 - X 0) := by
+    Matrix.det (R := MvPolynomial (Fin 3) R)
+      !![1, X 0, (X 0) ^ 2; 1, X 1, (X 1) ^ 2; 1, X 2, (X 2) ^ 2] =
+      (X 0 - X 1) * (X 1 - X 2) * (X 2 - X 0) := by
   simp only [norm_det]
   ring
 
-end BirdDet
+end NormDet
 
 end Matrix
