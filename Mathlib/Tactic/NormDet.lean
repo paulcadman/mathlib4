@@ -13,7 +13,7 @@ public import Mathlib.Tactic.Determinant.Bird.Cert
 /-!
 # `norm_det` tactic
 
-A tactic for normalizing determinants of matrices written using `!![...]` notation.
+The `norm_det` tactic normalizes determinants of matrices written using `!![...]` notation.
 -/
 
 variable {R : Type*}
@@ -49,8 +49,7 @@ private def matchSquareMatrixLiteral? {u : Level} (α : Q(Type u)) (matrixExpr :
     MetaM (Option (Nat × Array Q($α))) := do
   let .app matrixFn rows := matrixExpr | return none
   let .app _ matrixOf := matrixFn | return none
-  unless matrixOf.isAppOfArity ``Matrix.of 3 do return none
-  let #[rowType, colType, elementType] := matrixOf.getAppArgs | return none
+  let_expr Matrix.of rowType colType elementType := matrixOf | return none
   let_expr Fin rowDimensionExpr := rowType | return none
   let_expr Fin colDimensionExpr := colType | return none
   let some rowDimensionExpr ← checkTypeQ rowDimensionExpr q(ℕ)
