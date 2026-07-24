@@ -38,10 +38,7 @@ private def normalizeDetFromEntries {u : Level} {α : Q(Type u)} {n : Q(ℕ)} (r
   let birdDet := q(BirdDet.birdDet $n $arrayExpr)
   let detEqBirdDet := q($ofArrayEqA ▸ BirdDet.det_eq_birdDet $arrayExpr $hA)
   let birdDetNorm ← normalizeBirdDet birdDet
-  let detEqBirdDetRes : Simp.Result := {
-    expr := birdDet
-    proof? := some detEqBirdDet
-  }
+  let detEqBirdDetRes : Simp.Result := ⟨birdDet, some detEqBirdDet, true⟩
   detEqBirdDetRes.mkEqTrans birdDetNorm
 
 /-- Extract the entries of a square `!![...]` matrix literal in row-major order.
