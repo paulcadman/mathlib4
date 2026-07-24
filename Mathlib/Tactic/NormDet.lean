@@ -23,8 +23,8 @@ variable {R : Type*}
 theorem Matrix.ofArray_ofFn {m n : ℕ} (A : Matrix (Fin m) (Fin n) R) :
     .ofArray (.ofFn fun k : Fin (m * n) ↦ A k.divNat k.modNat) Array.size_ofFn = A := by
   ext i j
-  simp only [Matrix.ofArray_apply, Fin.getElem_fin, Array.getElem_ofFn]
-  rw [Fin.divNat_mkDivMod, Fin.modNat_mkDivMod]
+  rw [Matrix.ofArray_apply, Fin.getElem_fin, Array.getElem_ofFn, Fin.divNat_mkDivMod,
+    Fin.modNat_mkDivMod]
 
 public meta section
 
