@@ -19,14 +19,6 @@ normalizing determinants of matrix literals over a commutative ring.
 
 variable {R : Type*}
 
-/-- If `A` is a row-major flat-array representation of `M`, then Bird's
-algorithm on `A` computes the determinant of `M`. -/
-theorem det_birdDet_of_array {n : ℕ} [CommRing R]
-  (M : Matrix (Fin n) (Fin n) R) (A : Array R) (hA : A.size = n * n) (h : .ofArray A hA = M) :
-    M.det = BirdDet.birdDet n A := by
-  rw [← h]
-  exact BirdDet.det_eq_birdDet A hA
-
 /-- The matrix constructed from the array of `A`'s entries is `A`. -/
 theorem Matrix.ofArray_ofFn {m n : ℕ} (A : Matrix (Fin m) (Fin n) R) :
     .ofArray (.ofFn fun k : Fin (m * n) ↦ A k.divNat k.modNat) Array.size_ofFn = A := by
@@ -54,7 +46,7 @@ private def normalizeDetFromEntries {u : Level} {α : Q(Type u)} {n : Q(ℕ)} (r
   have : $arrayExpr =Q Array.ofFn fun k : Fin ($n * $n) ↦ $A k.divNat k.modNat := ⟨⟩
   let ofArrayEqA := q(Matrix.ofArray_ofFn $A)
   let birdDet := q(BirdDet.birdDet $n $arrayExpr)
-  let detEqBirdDet := q(det_birdDet_of_array $A $arrayExpr $hA $ofArrayEqA)
+  let detEqBirdDet := q($ofArrayEqA ▸ BirdDet.det_eq_birdDet $arrayExpr $hA)
   let birdDetNorm ← normalizeBirdDet birdDet
   let detEqBirdDetRes : Simp.Result := {
     expr := birdDet
