@@ -6,8 +6,7 @@ Authors: Paul Cadman
 module
 
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
-public import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
-import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
+meta import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Correctness
 public meta import Mathlib.Tactic.Determinant.Bird.Cert
 
 /-!
@@ -16,15 +15,6 @@ public meta import Mathlib.Tactic.Determinant.Bird.Cert
 This module defines the `norm_det` simproc and the `eval_det` tactic for
 normalizing determinants of matrix literals over a commutative ring.
 -/
-
-variable {R : Type*}
-
-/-- The matrix constructed from the array of `A`'s entries is `A`. -/
-theorem Matrix.ofArray_ofFn {m n : ℕ} (A : Matrix (Fin m) (Fin n) R) :
-    .ofArray (.ofFn fun k : Fin (m * n) ↦ A k.divNat k.modNat) Array.size_ofFn = A := by
-  ext i j
-  rw [Matrix.ofArray_apply, Fin.getElem_fin, Array.getElem_ofFn, Fin.divNat_mkDivMod,
-    Fin.modNat_mkDivMod]
 
 public meta section
 
