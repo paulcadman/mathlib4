@@ -6,6 +6,7 @@ https://github.com/leanprover-community/mathlib/blob/4f4a1c875d0baa92ab5d92f3fb1
 -/
 
 public import Lean
+import Mathlib.Algebra.MvPolynomial.PDeriv
 import Mathlib.GroupTheory.Perm.Fin
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.LinearAlgebra.Matrix.Determinant.Bird.Defs
@@ -253,6 +254,36 @@ example {K : Type*} [Field K] (x i j k : K) (hx : x ≠ 0) : Matrix.det
     !![x ^ 3, 0, 0; i, 1 / x, 0; j, k, 1 / x ^ 2] = 1 := by
   eval_det
   field_simp [hx]
+
+section Jacobian
+
+open MvPolynomial
+
+theorem pderiv_natCast {σ R : Type*} [CommSemiring R] {i : σ} {n : ℕ} :
+    pderiv i (n : MvPolynomial σ R) = 0 := by
+  rw [← map_natCast C n]
+  exact pderiv_C
+
+theorem pderiv_ofNat {σ R : Type*} [CommSemiring R] {i : σ} {n : ℕ} [n.AtLeastTwo] :
+    pderiv i (ofNat(n) : MvPolynomial σ R) = 0 :=
+  pderiv_natCast
+
+local notation "x" => (X 0 : MvPolynomial (Fin 3) ℤ)
+local notation "y" => (X 1 : MvPolynomial (Fin 3) ℤ)
+local notation "z" => (X 2 : MvPolynomial (Fin 3) ℤ)
+
+noncomputable def P₁ : MvPolynomial (Fin 3) ℤ := (1 + x*y)^3 * z + y^2 * (1 + x*y) * (4 + 3*x*y)
+noncomputable def P₂ : MvPolynomial (Fin 3) ℤ := y + 3*x*(1 + x*y)^2 * z + 3*x*y^2 * (4 + 3*x*y)
+noncomputable def P₃ : MvPolynomial (Fin 3) ℤ := 2*x - 3*x^2*y - x^3*z
+
+example : Matrix.det
+    !![pderiv 0 P₁, pderiv 1 P₁, pderiv 2 P₁;
+       pderiv 0 P₂, pderiv 1 P₂, pderiv 2 P₂;
+       pderiv 0 P₃, pderiv 1 P₃, pderiv 2 P₃] = -2 := by
+  simp [P₁, P₂, P₃, pderiv_ofNat]
+  eval_det
+
+end Jacobian
 
 end NormDet
 
