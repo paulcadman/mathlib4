@@ -70,6 +70,16 @@ def eval [Add M] [Zero M] [SMul R M] (l : NF R M) : M := (l.map (fun (⟨r, x⟩
     (p ::ᵣ l).eval = p.1 • p.2 + l.eval := by
   rfl
 
+theorem eval_nil [AddCommMonoid M] [Semiring R] [Module R M] :
+    NF.eval ([] : NF R M) = 0 := by
+  simp [NF.eval]
+
+theorem eval_cons_eq [AddCommMonoid M] [Semiring R] [Module R M] {r r' : R} (x : M)
+    {l : NF R M} {e : M} (hr : r = r') (h : l.eval = e) :
+    ((r, x) ::ᵣ l).eval = r' • x + e := by
+  subst hr h
+  exact NF.eval_cons (r, x) l
+
 theorem atom_eq_eval [AddMonoid M] (x : M) : x = NF.eval [(1, x)] := by simp [eval]
 
 variable (M) in
@@ -473,11 +483,16 @@ partial def parse (iM : Q(AddCommMonoid $M)) (x : Q($M)) :
   /- parse a `(0:M)` -/
   | ~q(0) =>
     pure ⟨0, q(Nat), q(Nat.instSemiring), q(AddCommMonoid.toNatModule), [], q(NF.zero_eq_eval $M)⟩
-  /- anything else should be treated as an atom -/
+  /- anything else should be treated as an atom: normalize it with the ambient `evalAtom` before
+  interning it -/
   | _ =>
-    let (k, ⟨x', _⟩) ← AtomM.addAtomQ x
+    let r ← (← read).evalAtom x
+    have x₁ : Q($M) := r.expr
+    let pf₁' ← r.getProof
+    have pf₁ : Q($x = $x₁) := pf₁'
+    let (k, ⟨x', _⟩) ← AtomM.addAtomQ x₁
     pure ⟨0, q(Nat), q(Nat.instSemiring), q(AddCommMonoid.toNatModule), [((q(1), x'), k)],
-      q(NF.atom_eq_eval $x')⟩
+      (q(($pf₁).trans (NF.atom_eq_eval $x')) :)⟩
 
 /-- Given expressions `R` and `M` representing types such that `M`'s is a module over `R`'s, and
 given two terms `l₁`, `l₂` of type `qNF R M`, i.e. lists of `(Q($R) × Q($M)) × ℕ`s (two `Expr`s
