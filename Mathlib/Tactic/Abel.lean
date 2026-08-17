@@ -492,13 +492,23 @@ Evaluate an expression into its `abel` normal form.
 This is a variant of `Mathlib.Tactic.Abel.eval`, the main driver of the `abel` tactic.
 It differs in
 * outputting a `Simp.Result`, rather than a `NormalExpr × Expr`;
-* throwing an error if the expression `e` is an atom for the `abel` tactic.
+* returning `none` if the expression `e` is an atom for the `abel` tactic.
+-/
+def evalExpr? (e : Expr) : AtomM (Option Simp.Result) := do
+  let e ← withReducible <| whnf e
+  if isAtom e then return none
+  let (a, pa) ← eval e (← mkContext e)
+  return some { expr := a, proof? := pa }
+
+/--
+Evaluate an expression into its `abel` normal form.
+
+This is a variant of `Mathlib.Tactic.Abel.evalExpr?` which
+throws an error if the expression `e` is an atom for the `abel` tactic.
 -/
 def evalExpr (e : Expr) : AtomM Simp.Result := do
-  let e ← withReducible <| whnf e
-  guard !(isAtom e)
-  let (a, pa) ← eval e (← mkContext e)
-  return { expr := a, proof? := pa }
+  let some r ← evalExpr? e | failure
+  pure r
 
 open Parser.Tactic
 
