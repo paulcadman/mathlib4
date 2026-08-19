@@ -214,3 +214,27 @@ example (f : M → R) (x y z : M)
   exact h
 
 end CommRing
+
+section Ring
+
+variable {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
+
+example (a b : R) (x : M) :
+    a • x + b • x = (a + b) • x := by
+  module_nf
+
+example (a b : R) (x : M) :
+    a • x + b • x = (b + a) • x := by
+  module_nf
+
+example (a : R) (x y : M)
+    (h : y = 0) : (a - a) • x + y = 0 := by
+  module_nf
+  exact h
+
+example (u : R) (x y : M) (h : u • y - x - x = 0) :
+    u • y + ((-2 : ℤ) • (1 : R)) • x = 0 := by
+  module_nf at h
+  exact h
+
+end Ring

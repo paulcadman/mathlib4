@@ -72,9 +72,11 @@ def inferBaseAtLocation (loc : Location) : TacticM (Σ u : Level, Q(Type u)) :=
 
 `module_nf` rewrites every linear combination `a • x + ... + b • y` appearing at the targeted
 locations into a normal form, collecting the scalars of common terms and normalizing them with
-`ring_nf`.  In particular, a goal `⊢ a • x + ... + b • y = c • x + ... + d • y` is closed when
-the two sides have the same normal form, otherwise the rewritten goal is left open, and
-`module_nf` can be used non-terminally.
+`ring_nf`. Over a noncommutative scalar ring the collected scalars are normalized using `abel` instead).
+
+In particular, a goal `⊢ a • x + ... + b • y = c • x + ... + d • y` is closed when the two sides
+have the same normal form, otherwise the rewritten goal is left open, and `module_nf` can be used
+non-terminally.
 
 Like `match_scalars` and `module`, linear combinations are parsed from `+`, `-`, `•` and `0`, other
 subexpressions (including variables) are atoms, and the scalars are interpreted in the largest
@@ -131,7 +133,11 @@ Scalar actions collected through an algebra tower are lowered back to the smalle
 expresses them:
 
 ```
-example [CommRing R] [CommRing S] [Algebra R S] [AddCommGroup M]
+example [Ring A] [AddCommGroup M] [Module A M] (a b : A) (x : M) :
+    a • x + b • x = (b + a) • x := by
+  module_nf
+
+example [CommRing R] [Ring S] [Algebra R S] [AddCommGroup M]
     [Module R M] [Module S M] [IsScalarTower R S M]
     (a b : R) (u : S) (x y : M) (P : M → Prop)
     (h : P (b • x + y)) : P (a • x + u • y + (1 - u) • y - (a - b) • x) := by

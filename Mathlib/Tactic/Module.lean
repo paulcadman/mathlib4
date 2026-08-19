@@ -7,6 +7,7 @@ module
 
 public meta import Lean.Meta.Tactic.NormCast
 public import Mathlib.Algebra.Algebra.Tower
+public import Mathlib.Tactic.Abel
 public import Mathlib.Tactic.Ring
 public import Mathlib.Util.AtomM
 public meta import Mathlib.Algebra.Algebra.Defs
@@ -622,14 +623,18 @@ def matchScalars (g : MVarId) : MetaM (List MVarId) := do
   let mvars ← AtomM.run .instances (matchScalarsAux g)
   mvars.mapM postprocess
 
-/-- Normalize a scalar produced by `Mathlib.Tactic.Module.parse`. This performs
-the same processing as `Mathlib.Tactic.Module.postprocess` and then normalizes
-with `ring_nf` if it's applicable. -/
+/-- Normalize a scalar produced by `Mathlib.Tactic.Module.parse`. This performs the same processing
+as `Mathlib.Tactic.Module.postprocess` and then normalizes with `ring_nf` when the scalar ring is a
+commutative semiring. Over a noncommutative scalar `abel_nf` is used instead. Scalars which are
+atoms for both engines are returned unchanged. -/
 def normalizeScalar (e : Expr) : AtomM Simp.Result := do
   let (r, _) ← Simp.main e (← postprocessCtx) (methods := Simp.mkDefaultMethodsCore {})
-  let some r' ← RingNF.evalExpr? r.expr | return r
-  -- `RingNF.cleanup` already folds `r'` into its result, so only the `r` leg remains
-  r.mkEqTrans (← RingNF.cleanup {} r')
+  if let some r' ← RingNF.evalExpr? r.expr then
+    return ← r.mkEqTrans (← RingNF.cleanup {} r')
+  -- `ring_nf` failed, so the scalar is an atom, or its ring is not a commutative
+  -- semiring so fall back to `abel_nf`.
+  let some ra ← Abel.evalExpr? r.expr | return r
+  r.mkEqTrans (← Abel.cleanup {} ra)
 
 /-- Rebuild the reified list `l` as an expression `c₁' • x₁ + (c₂' • x₂ + ... + 0)`
 with normalized scalars and a proof that it equals `NF.eval l`. -/
