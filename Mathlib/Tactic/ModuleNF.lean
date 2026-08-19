@@ -39,25 +39,37 @@ def inferBase (es : Array Expr) : MetaM (Σ u : Level, Q(Type u)) := do
 /-- Rewrite `e`, an expression in some `AddCommMonoid`, into `module_nf` normal form using
 `Mathlib.Tactic.Module.eval`.  Fails when `e` is not an application or is an atom for the
 module parser, so that `AtomM.recurse` descends into its subexpressions instead. -/
-def evalExpr (base : Σ u : Level, Q(Type u)) (e : Expr) : AtomM Simp.Result := do
+def evalExpr (base : Σ u : Level, Q(Type u)) (postCtx : Simp.Context) (e : Expr) :
+    AtomM Simp.Result := do
   let e ← withReducible <| whnf e
   guard e.isApp
   let ⟨_, M, e⟩ ← inferTypeQ' e
   let iM : Q(AddCommMonoid $M) ← synthInstanceQ q(AddCommMonoid $M)
-  let r ← Mathlib.Tactic.Module.eval iM base e
+  let r ← Mathlib.Tactic.Module.eval iM base postCtx e
   if r.isAtom then failure
   return { expr := r.expr, proof? := some r.proof }
 
-def cleanup (r : Simp.Result) : MetaM Simp.Result := do
+/-- The `Simp.Context` used by `ModuleNF.cleanup`: simplify away unit and zero scalar actions,
+and lower actions collected through an algebra tower back to the smaller ring
+(`algebraMap_smul`). -/
+def cleanupCtx : MetaM Simp.Context := do
   let thms ← [``one_smul, ``zero_smul, ``add_zero, ``zero_add, ``mul_one,
     ``one_mul, ``neg_one_smul, ``algebraMap_smul].foldlM (·.addConst ·) ({} : SimpTheorems)
-  let ctx ← Simp.mkContext { failIfUnchanged := false }
+  Simp.mkContext { failIfUnchanged := false }
     (simpTheorems := #[thms]) (congrTheorems := ← getSimpCongrTheorems)
+
+/-- Clean up a rewritten expression with the `cleanupCtx` lemmas.  `ctx` should be the context
+built by `cleanupCtx`; it is passed in so that it can be built once per invocation. -/
+def cleanup (ctx : Simp.Context) (r : Simp.Result) : MetaM Simp.Result := do
   r.mkEqTrans (← Simp.main r.expr ctx (methods := Simp.mkDefaultMethodsCore {})).1
 
-def moduleNFCore (s : IO.Ref AtomM.State) (base : Σ u : Level, Q(Type u)) (e : Expr) :
-    MetaM Simp.Result :=
-  AtomM.recurse s {} (wellBehavedDischarge := true) (evalExpr base) cleanup e
+/-- Run the `module_nf` rewrite on the expression `e`: normalize every maximal module
+subexpression with `evalExpr`, sharing the atom table `s` across locations, and clean up with
+`cleanup`. -/
+def moduleNFCore (s : IO.Ref AtomM.State) (base : Σ u : Level, Q(Type u))
+    (postCtx cleanCtx : Simp.Context) (e : Expr) : MetaM Simp.Result :=
+  AtomM.recurse s {} (wellBehavedDischarge := true) (evalExpr base postCtx)
+    (cleanup cleanCtx) e
 
 /-- Infer a common base scalar ring across all locations targeted by `loc`.
 
@@ -176,7 +188,10 @@ elab_rules : tactic
       | some R => getLevelQ' (← elabTerm R none)
       | none => inferBaseAtLocation loc
     let s ← IO.mkRef {}
-    transformAtNondepPropLocation (liftM ∘ moduleNFCore s base) "module_nf" loc .error false
+    let postCtx ← Mathlib.Tactic.Module.postprocessCtx
+    let cleanCtx ← cleanupCtx
+    transformAtNondepPropLocation (liftM ∘ moduleNFCore s base postCtx cleanCtx) "module_nf"
+      loc .error false
 
 end Mathlib.Tactic.ModuleNF
 

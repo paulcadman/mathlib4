@@ -627,8 +627,8 @@ def matchScalars (g : MVarId) : MetaM (List MVarId) := do
 as `Mathlib.Tactic.Module.postprocess` and then normalizes with `ring_nf` when the scalar ring is a
 commutative semiring. Over a noncommutative scalar `abel_nf` is used instead. Scalars which are
 atoms for both engines are returned unchanged. -/
-def normalizeScalar (e : Expr) : AtomM Simp.Result := do
-  let (r, _) ← Simp.main e (← postprocessCtx) (methods := Simp.mkDefaultMethodsCore {})
+def normalizeScalar (postCtx : Simp.Context) (e : Expr) : AtomM Simp.Result := do
+  let (r, _) ← Simp.main e postCtx (methods := Simp.mkDefaultMethodsCore {})
   if let some r' ← RingNF.evalExpr? r.expr then
     return ← r.mkEqTrans (← RingNF.cleanup {} r')
   -- `ring_nf` failed, so the scalar is an atom, or its ring is not a commutative
@@ -639,15 +639,15 @@ def normalizeScalar (e : Expr) : AtomM Simp.Result := do
 /-- Rebuild the reified list `l` as an expression `c₁' • x₁ + (c₂' • x₂ + ... + 0)`
 with normalized scalars and a proof that it equals `NF.eval l`. -/
 def qNF.rebuild {M : Q(Type v)} {R : Q(Type u)} (iM : Q(AddCommMonoid $M))
-    (iR : Q(Semiring $R)) (iRM : Q(Module $R $M)) (l : qNF R M) :
+    (iR : Q(Semiring $R)) (iRM : Q(Module $R $M)) (postCtx : Simp.Context) (l : qNF R M) :
     AtomM (Σ e : Q($M), Q(NF.eval $(l.toNF) = $e)) :=
   match l with
   | [] => pure ⟨q(0), q(NF.eval_nil (R := $R) (M := $M))⟩
   | ((r, x), _) :: t => do
-    let res ← normalizeScalar r
+    let res ← normalizeScalar postCtx r
     have r' : Q($R) := res.expr
     let hr : Q($r = $r') ← res.getProof
-    let ⟨e, pfT⟩ ← qNF.rebuild iM iR iRM t
+    let ⟨e, pfT⟩ ← qNF.rebuild iM iR iRM postCtx t
     pure ⟨q($r' • $x + $e), (q(NF.eval_cons_eq $x $hr $pfT) :)⟩
 
 /-- The result of `Mathlib.Tactic.Module.eval`. -/
@@ -687,7 +687,7 @@ When `base?` is provided, `eval` will also attempt to lift the coefficients into
 is not a semiring acting on `M` or when `qNF.matchRings` cannot relate the parsed ring to `base?`
 then the result falls back to the parsed ring. -/
 def eval {M : Q(Type v)} (iM : Q(AddCommMonoid $M)) (base? : Option (Σ u : Level, Q(Type u)))
-    (e : Q($M)) : AtomM (EvalResult M) := do
+    (postCtx : Simp.Context) (e : Q($M)) : AtomM (EvalResult M) := do
   let ⟨_, _, iR, iRM, l, pf⟩ ← parse iM e
   let isAtom ← match l with
     | [((_, x), _)] => withTransparency (← read).red <| isDefEq x e
@@ -697,10 +697,10 @@ def eval {M : Q(Type v)} (iM : Q(AddCommMonoid $M)) (base? : Option (Σ u : Leve
     | none => pure none
   let (e', pf') ← match lifted? with
     | some ⟨_, _, iB, iBM, l', pfL⟩ => do
-      let ⟨e', pf'⟩ ← qNF.rebuild iM iB iBM l'
+      let ⟨e', pf'⟩ ← qNF.rebuild iM iB iBM postCtx l'
       pure ((e' : Expr), ← mkEqTrans (← mkEqSymm pfL) pf')
     | none => do
-      let ⟨e', pf'⟩ ← qNF.rebuild iM iR iRM l
+      let ⟨e', pf'⟩ ← qNF.rebuild iM iR iRM postCtx l
       pure ((e' : Expr), (pf' : Expr))
   return { expr := e', proof := ← mkEqTrans pf pf', isAtom }
 
