@@ -67,6 +67,15 @@ theorem fromBlocks_apply₂₂ (A : Matrix n l α) (B : Matrix n m α) (C : Matr
     (D : Matrix o m α) (i : o) (j : m) : fromBlocks A B C D (Sum.inr i) (Sum.inr j) = D i j :=
   rfl
 
+theorem submatrix_subElem (M : Matrix p q α) (f₁ : n → p) (f₂ : o → p) (g₁ : l → q) (g₂ : m → q) :
+    M.submatrix (Sum.elim f₁ f₂) (Sum.elim g₁ g₂) =
+      fromBlocks (M.submatrix f₁ g₁) (M.submatrix f₁ g₂)
+        (M.submatrix f₂ g₁) (M.submatrix f₂ g₂) := by
+  ext i j
+  rcases i with a
+  | a <;> rcases j with b
+          | b <;> rfl
+
 /-- Given a matrix whose row and column indexes are sum types, we can extract the corresponding
 "top left" submatrix. -/
 def toBlocks₁₁ (M : Matrix (n ⊕ o) (l ⊕ m) α) : Matrix n l α :=
