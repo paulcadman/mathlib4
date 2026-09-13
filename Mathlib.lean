@@ -5281,6 +5281,7 @@ public import Mathlib.LinearAlgebra.Matrix.Hadamard
 public import Mathlib.LinearAlgebra.Matrix.HadamardMatrix
 public import Mathlib.LinearAlgebra.Matrix.Hermitian
 public import Mathlib.LinearAlgebra.Matrix.Hessenberg.Basic
+public import Mathlib.LinearAlgebra.Matrix.Hessenberg.CharPoly
 public import Mathlib.LinearAlgebra.Matrix.Hessenberg.Defs
 public import Mathlib.LinearAlgebra.Matrix.Hessenberg.Similarity
 public import Mathlib.LinearAlgebra.Matrix.Ideal
