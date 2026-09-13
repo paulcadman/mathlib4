@@ -1,8 +1,10 @@
 module
 
+meta import Mathlib.LinearAlgebra.Matrix.Hessenberg.Coeffs
 import Mathlib.LinearAlgebra.Matrix.Hessenberg.Similarity
-import Mathlib.LinearAlgebra.Matrix.Hessenberg.Defs
 import Mathlib.LinearAlgebra.Matrix.Notation
+
+open Polynomial
 
 example :
     let M : Matrix (Fin 3) (Fin 3) ℚ :=
@@ -33,7 +35,7 @@ def certId :
       L_diag_ne_zero := by decide
       hessenberg := by decide
 
-def certSheer :
+def certShear :
     let M : Matrix (Fin 3) (Fin 3) ℚ :=
       !![ 1, 2, 3;
           1, 1, 1;
@@ -55,4 +57,17 @@ example :
           2, 0, 1]
     let Harr := #[1, 8, 3, 1, 3, 1, 0, -4, -1]
     let H : Matrix (Fin 3) (Fin 3) ℚ := Matrix.ofArray Harr rfl
-    M.charpoly = H.charpoly := certSheer.charpoly_eq
+    M.charpoly = H.charpoly := certShear.charpoly_eq
+
+#guard Matrix.coeffHessCharPoly 0 (#[] : Array ℚ) = [1]
+example : Matrix.coeffHessCharPoly 0 (#[] : Array ℚ) = [1] := by decide +kernel
+
+#guard Matrix.coeffHessCharPoly 1 (#[5] : Array ℚ) = [-5, 1]
+example : Matrix.coeffHessCharPoly 1 (#[5] : Array ℚ) = [-5, 1] := by decide +kernel
+
+#guard Matrix.coeffHessCharPoly 2 (#[1, 2, 3, 4] : Array ℚ) = [-2, -5, 1]
+example : Matrix.coeffHessCharPoly 2 (#[1, 2, 3, 4] : Array ℚ) = [-2, -5, 1] := by decide +kernel
+
+#guard Matrix.coeffHessCharPoly 2 (#[1/2, 1, 1, 2] : Array ℚ) = [0, -5/2, 1]
+example : Matrix.coeffHessCharPoly 2 (#[1/2, 1, 1, 2] : Array ℚ) = [0, -5/2, 1] := by
+  decide +kernel
