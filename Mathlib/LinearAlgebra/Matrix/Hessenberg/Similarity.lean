@@ -5,8 +5,8 @@ Authors: Paul Cadman
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Charpoly.Basic
-public import Mathlib.LinearAlgebra.Matrix.Hessenberg.Defs
+public import Mathlib.LinearAlgebra.Matrix.Hessenberg.CharPoly
+public import Mathlib.LinearAlgebra.Matrix.Hessenberg.Coeffs
 
 /-!
 # Hessenberg similarity certificates
@@ -55,6 +55,20 @@ theorem Similarity.charpoly_eq [IsDomain R] {A : Matrix (Fin n) (Fin n) R} (cert
     _ = (Matrix.ofArray cert.Harr cert.size_eq).charpoly :=
         Matrix.charpoly_eq_of_mul_eq_mul
           (cert.L_lowerTriangular.det_ne_zero cert.L_diag_ne_zero) cert.similarity
+
+theorem Similarity.charpoly_eq_hessCharPoly [IsDomain R] {A : Matrix (Fin n) (Fin n) R}
+    (cert : Similarity A) : A.charpoly = Matrix.hessCharPoly n cert.Harr :=
+  cert.charpoly_eq.trans (Matrix.charpoly_eq_hessCharPoly cert.Harr cert.size_eq cert.hessenberg)
+
+theorem Similarity.charpoly_eq_ofCoeffs [IsDomain R] {A : Matrix (Fin n) (Fin n) R}
+    (cert : Similarity A) :
+    A.charpoly = Polynomial.ofCoeffs (Matrix.coeffHessCharPoly n cert.Harr) :=
+  cert.charpoly_eq_hessCharPoly.trans (Matrix.hessCharPoly_eq_ofCoeffs n cert.Harr)
+
+theorem Similarity.charpoly_eq_ofCoeffs_of_eq [IsDomain R] {A : Matrix (Fin n) (Fin n) R}
+    (cert : Similarity A) {cs : List R} (h : Matrix.coeffHessCharPoly n cert.Harr = cs) :
+    A.charpoly = Polynomial.ofCoeffs cs :=
+  cert.charpoly_eq_ofCoeffs.trans (congrArg _ h)
 
 end Hessenberg
 

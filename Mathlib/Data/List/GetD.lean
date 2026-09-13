@@ -86,6 +86,9 @@ theorem getD_surjective_iff {l : List α} {d : α} :
 theorem getD_surjective {l : List α} (h : ∀ x, x ∈ l) (d : α) : (l.getD · d).Surjective :=
   getD_surjective_iff.mpr fun _ ↦ .inr <| h _
 
+theorem getD_toArray (i : ℕ) : l.toArray.getD i d = l.getD i d := by
+  rw [Array.getD_eq_getD_getElem?, getElem?_toArray, List.getD]
+
 end getD
 
 section getI
