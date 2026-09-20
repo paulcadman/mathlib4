@@ -108,6 +108,11 @@ theorem charmatrix_reindex (e : n ≃ m) :
   by_cases h : i = j
   all_goals simp [h]
 
+theorem charmatrix_submatrix {f : m → n} (hf : Function.Injective f) :
+    charmatrix (M.submatrix f f) = (charmatrix M).submatrix f f := by
+  ext i j
+  simp [charmatrix_apply, diagonal_apply, hf.eq_iff]
+
 lemma charmatrix_map (M : Matrix n n R) (f : R →+* S) :
     charmatrix (M.map f) = (charmatrix M).map (Polynomial.map f) := by
   ext i j
