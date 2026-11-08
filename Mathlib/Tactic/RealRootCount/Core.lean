@@ -24,14 +24,14 @@ namespace CoeffList
 variable {R : Type*}
 
 /-- The sum of the polynomials that `p` and `q` represent. -/
-def add [Add R] [Zero R] (p q : List R) : List R :=
+public def add [Add R] [Zero R] (p q : List R) : List R :=
   List.zipWithAll (fun a b => a.getD 0 + b.getD 0) p q
 
 /-- The negation of the polynomial that `p` represents. -/
-def neg [Neg R] (p : List R) : List R := p.map (- ·)
+public def neg [Neg R] (p : List R) : List R := p.map (- ·)
 
 /-- The product of the polynomial that `p` and `q` represent. -/
-def mul [Semiring R] (p : List R) (q : List R) : List R :=
+public def mul [Semiring R] (p : List R) (q : List R) : List R :=
   match p, q with
   | [], _ => []
   | c :: p1, q1 => add (q1.map (c * ·)) (0 :: mul p1 q1)

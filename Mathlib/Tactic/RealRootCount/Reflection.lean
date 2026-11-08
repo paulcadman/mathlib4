@@ -11,7 +11,7 @@ public import Mathlib.Tactic.RealRootCount.CoeffList
 public import Mathlib.Tactic.RealRootCount.SturmCount
 
 /-!
-# Checking the `real_root_count` certificates by reflection
+# Checking Sturm data for `real_root_count` by reflection
 -/
 
 @[expose] public section
@@ -107,5 +107,30 @@ def realRootCount? (p : List ℚ) (d : SturmData) : Option ℕ :=
   let atTop := (sturmSeq.map lead).signVariations
   let atBot := (sturmSeq.map fun e => if e.length % 2 = 0 then -lead e else lead e).signVariations
   if checkSturm p d && atTop ≤ atBot then some (atBot - atTop) else none
+
+/-- The real polynomial that `p` represents. -/
+noncomputable abbrev toReal {R : Type*} [CommSemiring R] [Algebra R ℝ] (p : List R) : ℝ[X] :=
+  (ofCoeffList p).map (algebraMap R ℝ)
+
+/-! `real_root_count` rewrites with the next two lemmas to turn a coefficient list into a
+polynomial expression. -/
+
+theorem toReal_nil : toReal ([] : List ℚ) = 0 := by
+  sorry
+
+theorem toReal_cons (c : ℚ) (p : List ℚ) : toReal (c :: p) = C (c : ℝ) + X * toReal p := by
+  sorry
+
+theorem sturmCount_of_realRootCount? {p : List ℚ} {d : SturmData} {n : ℕ}
+    (h : realRootCount? p d = some n) :
+    SturmCount (toReal p) ((chain d.s (CoeffList.derivative d.s) d.steps).map toReal) n := by
+  sorry
+
+theorem card_rootSet_of_realRootCount? {R : Type*} [CommRing R] [Algebra R ℝ] {f : R[X]}
+    {p : List ℚ} {d : SturmData} {n : ℕ} (hf : f.map (algebraMap R ℝ) = toReal p)
+    (h : realRootCount? p d = some n) : Fintype.card (f.rootSet ℝ) = n := by
+  have hS := sturmCount_of_realRootCount? h
+  rw [← hf] at hS
+  exact hS.card_rootSet
 
 end Mathlib.Tactic.RealRootCount

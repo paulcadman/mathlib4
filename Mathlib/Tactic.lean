@@ -324,6 +324,7 @@ public import Mathlib.Tactic.Push
 public import Mathlib.Tactic.Push.Attr
 public import Mathlib.Tactic.Qify
 public import Mathlib.Tactic.RSuffices
+public import Mathlib.Tactic.RealRootCount
 public import Mathlib.Tactic.RealRootCount.CoeffList
 public import Mathlib.Tactic.RealRootCount.Core
 public import Mathlib.Tactic.RealRootCount.Reflection

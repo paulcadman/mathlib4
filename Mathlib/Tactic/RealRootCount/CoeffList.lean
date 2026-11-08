@@ -27,11 +27,6 @@ variable {R : Type*}
 /-- The last entry of a coefficient list: the leading coefficient when it is nonzero. -/
 @[expose] def lead [Zero R] (l : List R) : R := l.getLastD 0
 
-/-- The coefficients of polynomial constructed from a sparse form. -/
-@[expose] def ofSparse [Zero R] : List (ℕ × R) → List R
-  | [] => []
-  | (g, c) :: m => List.replicate g 0 ++ c :: ofSparse m
-
 /-- The sup norm of the polynomial that `p` represents. -/
 @[expose] def supNorm (l : List ℤ) : ℕ := l.foldl (fun m c => max m c.natAbs) 0
 
