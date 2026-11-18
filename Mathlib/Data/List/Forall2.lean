@@ -116,6 +116,11 @@ theorem forall₂_map_right_iff {f : γ → β} :
   | _, [] => by simp only [map, forall₂_nil_right_iff]
   | _, b :: u => by simp only [map, forall₂_cons_right_iff, forall₂_map_right_iff]
 
+theorem Forall₂.map_eq_map {f : α → γ} {g : β → γ} {l₁ l₂} (h : Forall₂ R l₁ l₂)
+    (hfg : ∀ a b, R a b → f a = g b) : l₁.map f = l₂.map g := by
+  simp only [← forall₂_eq_eq_eq, forall₂_map_left_iff, forall₂_map_right_iff]
+  exact imp hfg h
+
 theorem left_unique_forall₂' (hr : LeftUnique R) : ∀ {a b c}, Forall₂ R a c → Forall₂ R b c → a = b
   | _, _, _, Forall₂.nil, Forall₂.nil => rfl
   | _, _, _, Forall₂.cons ha₀ h₀, Forall₂.cons ha₁ h₁ =>
