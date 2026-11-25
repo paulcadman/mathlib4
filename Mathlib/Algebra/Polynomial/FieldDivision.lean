@@ -8,12 +8,12 @@ module
 public import Mathlib.Algebra.Polynomial.Derivative
 public import Mathlib.Algebra.Polynomial.Eval.SMul
 public import Mathlib.Algebra.Polynomial.Roots
-public import Mathlib.Data.Multiset.Fintype
 public import Mathlib.RingTheory.EuclideanDomain
 public import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
 
 import Mathlib.Algebra.NoZeroSMulDivisors.Basic
 import Mathlib.Algebra.Order.Group.Finset
+import Mathlib.Data.Multiset.Fintype
 
 /-!
 # Theory of univariate polynomials
@@ -338,6 +338,9 @@ theorem mod_def : p % q = p %ₘ (q * C (leadingCoeff q)⁻¹) := rfl
 
 theorem neg_mod : (-p) % q = -(p % q) := by rw [mod_def, mod_def, neg_modByMonic]
 
+theorem C_mul_mod (a : R) (p q : R[X]) : (C a * p) % q = C a * (p % q) := by
+  simp only [mod_def, ← smul_eq_C_mul, smul_modByMonic]
+
 theorem modByMonic_eq_mod (p : R[X]) (hq : Monic q) : p %ₘ q = p % q :=
   show p %ₘ q = p %ₘ (q * C (leadingCoeff q)⁻¹) by
     simp only [Monic.def.1 hq, inv_one, mul_one, C_1]
@@ -447,6 +450,17 @@ theorem sub_mod (p₁ p₂ q : R[X]) : (p₁ - p₂) % q = p₁ % q - p₂ % q :
 theorem mul_mod (p₁ p₂ q : R[X]) : (p₁ * p₂) % q = (p₁ % q) * (p₂ % q) % q := by
   simp_rw [Polynomial.mod_def]
   apply Polynomial.mul_modByMonic
+
+protected theorem add_div (p₁ p₂ q : R[X]) : (p₁ + p₂) / q = p₁ / q + p₂ / q := by
+  simp only [div_def, add_divByMonic, mul_add]
+
+theorem mul_add_mod_of_degree_lt {d q r : R[X]} (h : r.degree < q.degree) :
+    (d * q + r) % q = r := by
+  simp [add_mod, mul_mod, mod_eq_self_iff (ne_zero_of_degree_gt h), h]
+
+theorem mul_add_div_of_degree_lt {d q r : R[X]} (h : r.degree < q.degree) :
+    (d * q + r) / q = d := by
+  simp [Polynomial.add_div, Polynomial.div_eq_zero_iff, ne_zero_of_degree_gt h, h]
 
 lemma eval_mod_eq_self_of_root {p q : R[X]} {x : R} (hx : eval x q = 0) :
     (p % q).eval x = p.eval x :=
